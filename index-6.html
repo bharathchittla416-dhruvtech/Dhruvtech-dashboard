@@ -1,0 +1,1949 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<meta name="theme-color" content="#07080d"/>
+<title>FaultMap Pro — Technician Diagnostic Atlas</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#07080d;--bg2:#0b0d14;--panel:#0f1219;--panel2:#151920;--line:#1c2030;
+  --ink:#eaecf5;--ink2:#a8b0c5;--ink3:#626b85;
+  --a:#5ee8ff;--b:#b388ff;--w:#ffb347;--g:#4ef0a0;--r:#ff5f7e;
+  --grad:linear-gradient(135deg,#5ee8ff,#b388ff 55%,#ff80c0);
+  --glow:0 0 32px rgba(94,232,255,.15);
+  --mono:'Courier New',Courier,monospace;
+  --font:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:14px;line-height:1.5}
+body{display:flex;flex-direction:column;
+  background:radial-gradient(ellipse 120% 50% at 90% -5%,rgba(179,136,255,.08) 0%,transparent 55%),
+             radial-gradient(ellipse 80% 40% at 5% 105%,rgba(94,232,255,.06) 0%,transparent 50%),
+             var(--bg)}
+button{font-family:inherit;cursor:pointer;border:0;background:none;color:inherit}
+input{font-family:inherit;color:inherit}
+::selection{background:rgba(94,232,255,.2)}
+a{color:var(--a);text-decoration:none}
+
+/* ── TOP BAR ── */
+.bar{flex-shrink:0;display:flex;align-items:center;gap:10px;padding:12px 16px;
+  border-bottom:1px solid var(--line);background:rgba(7,8,13,.85);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);z-index:20}
+.bar-logo{width:32px;height:32px;border-radius:9px;background:var(--grad);
+  display:grid;place-items:center;box-shadow:var(--glow);flex-shrink:0}
+.bar-logo svg{width:16px;height:16px;color:#07080d}
+.bar-brand{display:flex;flex-direction:column;line-height:1.2}
+.bar-brand strong{font-size:14px;font-weight:700;letter-spacing:.1px}
+.bar-brand span{font-size:10px;color:var(--ink3);letter-spacing:1.5px;text-transform:uppercase}
+.bar-space{flex:1}
+.bar-badge{display:flex;align-items:center;gap:5px;font-size:11px;padding:4px 9px;
+  border:1px solid var(--line);border-radius:99px;color:var(--ink2);background:var(--panel)}
+.bar-badge i{width:6px;height:6px;border-radius:50%;background:var(--g);box-shadow:0 0 6px var(--g)}
+.bar-menu{display:none;width:34px;height:34px;border-radius:8px;border:1px solid var(--line);
+  background:var(--panel);place-items:center;color:var(--ink2)}
+.bar-menu svg{width:15px;height:15px}
+@media(max-width:860px){.bar-menu{display:grid}}
+
+/* ── SHELL ── */
+.shell{flex:1;display:grid;grid-template-columns:272px 1fr;min-height:0}
+@media(max-width:860px){
+  .shell{grid-template-columns:1fr}
+  .side{display:none;position:fixed;inset:58px 0 0 0;z-index:50;background:var(--bg);width:min(300px,100%)}
+  .side.open{display:flex}
+}
+
+/* ── SIDEBAR ── */
+.side{border-right:1px solid var(--line);background:var(--bg2);display:flex;flex-direction:column;min-height:0}
+.side-search{padding:12px 10px 6px;position:relative}
+.side-search input{width:100%;height:38px;background:var(--panel);border:1px solid var(--line);
+  border-radius:9px;padding:0 10px 0 36px;color:var(--ink);font-size:13px;outline:none;transition:.15s}
+.side-search input:focus{border-color:#2b3454;box-shadow:0 0 0 2px rgba(94,232,255,.09)}
+.side-search svg{position:absolute;left:22px;top:50%;transform:translateY(-50%);
+  width:14px;height:14px;color:var(--ink3);pointer-events:none}
+.side-nav{flex:1;overflow-y:auto;padding:2px 7px 20px;scrollbar-width:thin;scrollbar-color:#1c2030 transparent}
+.side-nav::-webkit-scrollbar{width:3px}
+.side-nav::-webkit-scrollbar-thumb{background:#1c2030;border-radius:2px}
+.nav-head{font-size:9.5px;text-transform:uppercase;letter-spacing:2px;color:var(--ink3);
+  padding:14px 9px 6px;font-weight:700}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 9px;border-radius:8px;
+  cursor:pointer;transition:.1s;color:var(--ink3);font-size:13px;
+  border:1px solid transparent;margin-bottom:1px}
+.nav-item:hover{background:var(--panel);color:var(--ink2)}
+.nav-item.on{background:rgba(94,232,255,.08);color:var(--ink);border-color:rgba(94,232,255,.18)}
+.nav-ico{width:24px;height:24px;border-radius:6px;background:var(--panel);
+  display:grid;place-items:center;flex-shrink:0;color:var(--ink3)}
+.nav-item.on .nav-ico{background:var(--grad);color:#07080d}
+.nav-ico svg{width:12px;height:12px}
+.nav-lbl{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12.5px}
+
+/* ── MAIN ── */
+.main{overflow-y:auto;min-height:0;scrollbar-width:thin;scrollbar-color:#1c2030 transparent}
+.main::-webkit-scrollbar{width:5px}
+.main::-webkit-scrollbar-thumb{background:#1c2030;border-radius:3px}
+
+/* ── HERO ── */
+.hero{padding:22px 28px 16px;border-bottom:1px solid var(--line);
+  background:radial-gradient(600px 200px at 20% 50%,rgba(94,232,255,.05),transparent 60%)}
+.hero-row{display:flex;align-items:flex-start;gap:14px;margin-bottom:12px}
+.hero-ico{width:50px;height:50px;border-radius:14px;background:var(--grad);
+  display:grid;place-items:center;box-shadow:var(--glow);flex-shrink:0}
+.hero-ico svg{width:22px;height:22px;color:#07080d}
+.hero-cat{font-size:10px;letter-spacing:1.8px;text-transform:uppercase;color:var(--a);font-weight:700;margin-bottom:3px}
+.hero-title{font-size:22px;font-weight:700;letter-spacing:-.3px;line-height:1.15;
+  background:linear-gradient(170deg,#fff 20%,#8a95b0);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero-sub{font-size:13px;color:var(--ink2);margin-top:5px;max-width:600px}
+.hero-pills{display:flex;gap:7px;flex-wrap:wrap}
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:5px 9px;
+  border:1px solid var(--line);border-radius:99px;color:var(--ink2);background:var(--panel)}
+.pill svg{width:10px;height:10px;color:var(--a)}
+.pill b{color:var(--ink);font-weight:600}
+@media(max-width:560px){.hero{padding:16px 14px 12px}.hero-title{font-size:18px}}
+
+/* ── CONTENT ── */
+.content{padding:20px 28px 56px}
+@media(max-width:560px){.content{padding:14px 14px 48px}}
+.sec{margin-bottom:24px}
+.sec-head{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.sec-line{width:2.5px;height:13px;background:var(--grad);border-radius:2px;flex-shrink:0}
+.sec-title{font-size:11px;letter-spacing:1.8px;text-transform:uppercase;font-weight:700;color:var(--ink)}
+.sec-ct{font-size:10.5px;color:var(--ink3);margin-left:auto}
+
+/* ── INTERACTIVE MAP ── */
+.map-wrap{background:var(--panel);border:1px solid var(--line);border-radius:12px;
+  overflow:hidden;padding:14px 0 8px}
+.map-scroll{overflow-x:auto;padding:0 14px 10px;scrollbar-width:thin;scrollbar-color:#1c2030 transparent}
+.map-scroll::-webkit-scrollbar{height:3px}
+.map-scroll::-webkit-scrollbar-thumb{background:#1c2030;border-radius:2px}
+.map-svg{display:block;overflow:visible}
+/* step node in map */
+.mn rect{rx:7;ry:7;transition:.3s}
+.mn text{font-family:var(--mono);font-size:9px;dominant-baseline:middle;text-anchor:middle;pointer-events:none}
+.mn .mn-num{font-size:8px;fill:var(--ink3)}
+.mn.type-check rect{fill:#0d1420;stroke:#1c3060;stroke-width:1.5}
+.mn.type-check.active rect{fill:#0e1e3a;stroke:var(--a);stroke-width:2;filter:drop-shadow(0 0 6px rgba(94,232,255,.4))}
+.mn.type-check.done-pass rect{fill:#0b1e15;stroke:var(--g);stroke-width:1.5}
+.mn.type-check.done-fail rect{fill:#1e0b10;stroke:var(--r);stroke-width:1.5}
+.mn.type-test rect{fill:#1a1200;stroke:#3a2800;stroke-width:1.5}
+.mn.type-test.active rect{fill:#221800;stroke:var(--w);stroke-width:2;filter:drop-shadow(0 0 6px rgba(255,179,71,.35))}
+.mn.type-test.done-pass rect{fill:#0b1e15;stroke:var(--g);stroke-width:1.5}
+.mn.type-test.done-fail rect{fill:#1e0b10;stroke:var(--r);stroke-width:1.5}
+.mn.type-fix rect{fill:#130e20;stroke:#2a1e48;stroke-width:1.5}
+.mn.type-fix.active rect{fill:#180f28;stroke:var(--b);stroke-width:2;filter:drop-shadow(0 0 6px rgba(179,136,255,.35))}
+.mn.type-danger rect{fill:#1a0606;stroke:#4a0f0f;stroke-width:1.5}
+.mn.type-danger.active rect{fill:#220808;stroke:var(--r);stroke-width:2}
+.mn.type-check text,.mn.type-test text,.mn.type-fix text,.mn.type-danger text{fill:var(--ink2)}
+.mn.active text{fill:var(--ink)}
+.mn.done-pass text{fill:var(--g)}
+.mn.done-fail text{fill:var(--r)}
+/* connector paths */
+.mc{fill:none;stroke-width:1.5;opacity:.5;transition:.3s}
+.mc.active{opacity:1;stroke-width:2}
+.mc.pass-path{stroke:var(--g)}
+.mc.fail-path{stroke:var(--r)}
+.mc.normal{stroke:#2a3050}
+/* outcome indicator dot */
+.mn .mn-badge{transition:.3s;opacity:0}
+.mn.done-pass .mn-badge,.mn.done-fail .mn-badge{opacity:1}
+
+/* ── STEP CARDS ── */
+.steps{display:flex;flex-direction:column;gap:8px}
+.step{border-radius:11px;overflow:hidden;border:1px solid var(--line);transition:.15s;cursor:pointer}
+.step.active{border-color:rgba(94,232,255,.25);box-shadow:0 0 0 3px rgba(94,232,255,.06)}
+.step-head{display:flex;align-items:center;gap:8px;padding:11px 13px;background:var(--panel);user-select:none}
+.step-num{font-family:var(--mono);font-size:9.5px;color:var(--ink3);letter-spacing:.5px;flex-shrink:0}
+.step-badge{font-size:9.5px;padding:2px 6px;border-radius:4px;font-weight:700;
+  letter-spacing:.5px;text-transform:uppercase;font-family:var(--mono);flex-shrink:0}
+.sb-check{background:rgba(94,232,255,.1);color:var(--a)}
+.sb-test{background:rgba(255,179,71,.1);color:var(--w)}
+.sb-fix{background:rgba(179,136,255,.12);color:var(--b)}
+.sb-danger{background:rgba(255,95,126,.1);color:var(--r)}
+.step-title{font-size:13.5px;font-weight:650;color:var(--ink);flex:1;min-width:0}
+.step-outcome{font-size:11px;padding:2px 8px;border-radius:99px;font-weight:700;flex-shrink:0}
+.outcome-pass{background:rgba(78,240,160,.15);color:var(--g)}
+.outcome-fail{background:rgba(255,95,126,.15);color:var(--r)}
+.step-chevron{color:var(--ink3);flex-shrink:0;transition:.2s}
+.step-chevron svg{width:13px;height:13px}
+.step.open .step-chevron{transform:rotate(180deg)}
+
+.step-body{display:none;padding:0 13px 14px;background:var(--panel)}
+.step.open .step-body{display:block}
+.step-desc{font-size:13px;color:var(--ink2);line-height:1.65;margin-bottom:10px}
+
+/* measurements */
+.meas-row{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px}
+.mv{font-family:var(--mono);font-size:11px;padding:4px 8px;border-radius:5px;
+  border:1px solid var(--line);background:var(--bg2);display:inline-flex;align-items:center;gap:5px}
+.mv-label{color:var(--ink3)}
+.mv-val{font-weight:700}
+.mv.ok .mv-val{color:var(--g)}
+.mv.warn .mv-val{color:var(--w)}
+.mv.bad .mv-val{color:var(--r)}
+.mv.info .mv-val{color:var(--a)}
+
+/* pass/fail section */
+.pf-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px}
+@media(max-width:500px){.pf-grid{grid-template-columns:1fr}}
+.pf-box{border-radius:8px;padding:9px 11px}
+.pf-box.ok{background:rgba(78,240,160,.05);border:1px solid rgba(78,240,160,.18)}
+.pf-box.bad{background:rgba(255,95,126,.05);border:1px solid rgba(255,95,126,.18)}
+.pf-hd{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px;display:flex;align-items:center;gap:5px}
+.pf-box.ok .pf-hd{color:var(--g)}
+.pf-box.bad .pf-hd{color:var(--r)}
+.pf-txt{font-size:12px;color:var(--ink2);line-height:1.6}
+
+/* action items */
+.acts{display:flex;flex-direction:column;gap:4px;margin-bottom:8px}
+.act{display:flex;gap:7px;font-size:12.5px;padding:7px 9px;
+  background:var(--bg2);border:1px solid var(--line);border-radius:7px;line-height:1.5;align-items:flex-start}
+.act-ico{width:16px;height:16px;border-radius:4px;background:var(--panel2);
+  display:grid;place-items:center;font-size:9px;font-weight:700;flex-shrink:0;margin-top:1px;font-family:var(--mono)}
+.act.ok .act-ico{color:var(--g)}
+.act.warn .act-ico{color:var(--w)}
+.act.bad .act-ico{color:var(--r)}
+.act-txt{color:var(--ink2)}
+
+/* PASS/FAIL buttons */
+.pf-btns{display:flex;gap:8px;margin-top:12px}
+.btn-pass,.btn-fail,.btn-skip{padding:8px 18px;border-radius:8px;font-size:12.5px;font-weight:700;
+  letter-spacing:.3px;transition:.15s;border:1px solid}
+.btn-pass{background:rgba(78,240,160,.12);border-color:rgba(78,240,160,.3);color:var(--g)}
+.btn-pass:hover{background:rgba(78,240,160,.2)}
+.btn-fail{background:rgba(255,95,126,.1);border-color:rgba(255,95,126,.28);color:var(--r)}
+.btn-fail:hover{background:rgba(255,95,126,.18)}
+.btn-skip{background:var(--bg2);border-color:var(--line);color:var(--ink3);font-size:12px;padding:8px 14px}
+.btn-skip:hover{color:var(--ink2)}
+
+/* lines table */
+.lines-tbl{width:100%;border-collapse:collapse}
+.lines-tbl tr{border-bottom:1px solid var(--line)}
+.lines-tbl tr:last-child{border:0}
+.lines-tbl td{padding:7px 9px;font-size:12px;vertical-align:top}
+.lines-tbl .td-net{font-family:var(--mono);color:var(--a);font-weight:700;white-space:nowrap;font-size:11px}
+.lines-tbl .td-dir{color:var(--ink3);white-space:nowrap;font-size:11px}
+.lines-tbl .td-nom{color:var(--ink);font-weight:600}
+.lines-tbl .td-note{color:var(--ink2)}
+.lines-wrap{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+
+/* ICs */
+.ic-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px}
+.ic-card{background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:11px 13px}
+.ic-name{font-family:var(--mono);font-size:11.5px;color:var(--a);font-weight:700;margin-bottom:2px}
+.ic-aka{font-size:10.5px;color:var(--ink3);margin-bottom:6px}
+.ic-desc{font-size:12px;color:var(--ink2);line-height:1.55}
+
+/* verify */
+.verify{background:rgba(78,240,160,.05);border:1px solid rgba(78,240,160,.18);
+  border-radius:10px;padding:13px 15px}
+.verify-hd{font-size:10.5px;text-transform:uppercase;letter-spacing:1.5px;color:var(--g);
+  font-weight:700;margin-bottom:8px}
+.verify-list{list-style:none;display:flex;flex-direction:column;gap:5px}
+.verify-list li{display:flex;gap:8px;font-size:12.5px;color:var(--ink2);align-items:flex-start}
+.verify-list li::before{content:"✓";color:var(--g);font-weight:700;flex-shrink:0;font-size:11px;margin-top:2px}
+
+/* mistakes */
+.mistakes{display:flex;flex-direction:column;gap:6px}
+.mistake{display:flex;gap:10px;padding:10px 12px;background:var(--panel);
+  border:1px solid rgba(255,95,126,.12);border-radius:9px;align-items:flex-start}
+.mistake-e{font-size:18px;flex-shrink:0;line-height:1}
+.mistake-t{font-size:13px;font-weight:650;color:var(--ink);margin-bottom:2px}
+.mistake-d{font-size:12px;color:var(--ink2);line-height:1.55}
+
+/* summary block */
+.summary{background:var(--panel);border:1px solid var(--line);border-radius:10px;
+  padding:14px 16px;font-size:13.5px;color:var(--ink2);line-height:1.7}
+
+/* tools */
+.tools-row{display:flex;gap:7px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+.tools-row::-webkit-scrollbar{display:none}
+.tool{flex-shrink:0;display:flex;align-items:center;gap:8px;padding:8px 11px;
+  background:var(--panel);border:1px solid var(--line);border-radius:9px}
+.tool-ico{width:26px;height:26px;border-radius:6px;background:var(--panel2);
+  display:grid;place-items:center;color:var(--a);flex-shrink:0}
+.tool-ico svg{width:12px;height:12px}
+.tool-n{font-size:12px;font-weight:600;color:var(--ink)}
+.tool-s{font-size:10.5px;color:var(--ink3)}
+
+/* progress bar */
+.progress-bar{height:3px;background:var(--line);border-radius:2px;overflow:hidden;margin-bottom:16px}
+.progress-fill{height:100%;background:var(--grad);border-radius:2px;transition:.4s}
+
+/* home */
+.home{padding:32px 28px}
+@media(max-width:560px){.home{padding:22px 14px}}
+.home-hi{font-size:10px;letter-spacing:2px;color:var(--a);text-transform:uppercase;font-weight:700;margin-bottom:6px}
+.home-h{font-size:30px;font-weight:700;letter-spacing:-.5px;line-height:1.1;margin-bottom:10px;
+  background:linear-gradient(170deg,#fff 25%,#8090b0);-webkit-background-clip:text;background-clip:text;color:transparent}
+.home-lede{font-size:14.5px;color:var(--ink2);max-width:560px;margin-bottom:22px;line-height:1.65}
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:8px;margin-bottom:24px}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:12px}
+.stat-n{font-size:22px;font-weight:700;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.stat-l{font-size:10px;color:var(--ink3);text-transform:uppercase;letter-spacing:1px;margin-top:3px}
+.quick{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px}
+.qbtn{background:var(--panel);border:1px solid var(--line);border-radius:10px;
+  padding:13px;cursor:pointer;text-align:left;display:flex;flex-direction:column;gap:7px;
+  transition:.13s;min-height:110px}
+.qbtn:hover{border-color:rgba(94,232,255,.25);transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.3)}
+.qbtn-ico{width:30px;height:30px;border-radius:8px;background:var(--panel2);display:grid;place-items:center;color:var(--a)}
+.qbtn:hover .qbtn-ico{background:var(--grad);color:#07080d}
+.qbtn-ico svg{width:14px;height:14px}
+.qbtn-t{font-size:12.5px;font-weight:650;color:var(--ink);line-height:1.3}
+.qbtn-d{font-size:11px;color:var(--ink3);margin-top:auto;line-height:1.4}
+
+/* footer */
+.footer{padding:14px 28px;border-top:1px solid var(--line);font-size:11px;color:var(--ink3);
+  display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;flex-shrink:0}
+
+/* backdrop */
+.backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:40;backdrop-filter:blur(3px)}
+.backdrop.on{display:block}
+
+/* anim */
+.fade{animation:fadeIn .28s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="bar">
+  <button class="bar-menu" id="menuBtn">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+  </button>
+  <div class="bar-logo">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 2L4 7V13C4 17.5 7.5 20.5 12 22C16.5 20.5 20 17.5 20 13V7Z"/>
+      <polyline points="9,12 11,14 15,10"/>
+    </svg>
+  </div>
+  <div class="bar-brand"><strong>FaultMap Pro</strong><span>Diagnostic Atlas · v5.1</span></div>
+  <div class="bar-space"></div>
+  <div class="bar-badge"><i></i> Offline Ready</div>
+</div>
+
+<div class="backdrop" id="bdrop"></div>
+
+<div class="shell">
+  <!-- SIDEBAR -->
+  <aside class="side" id="side">
+    <div class="side-search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+      <input id="srch" placeholder="Search fault, IC, signal…" autocomplete="off"/>
+    </div>
+    <nav class="side-nav" id="sideNav"></nav>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main" id="mainArea"></main>
+</div>
+
+<script>
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   SVG ICONS — defined as functions returning SVG element strings
+   Kept separate from data rendering to avoid injection bugs
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+const SVG = {
+  power:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v10"/><path d="M18.4 6.6a9 9 0 1 1-12.77.04"/></svg>',
+  charge:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h9l-1 8 10-12h-9z"/></svg>',
+  display:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="3"/><line x1="9" y1="18" x2="15" y2="18"/></svg>',
+  touch:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11V6a3 3 0 1 1 6 0v5"/><path d="M6 11h12v5a6 6 0 0 1-12 0z"/></svg>',
+  network:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12a10 10 0 0 1 20 0"/><path d="M5 12a7 7 0 0 1 14 0"/><path d="M8.5 12a3.5 3.5 0 0 1 7 0"/><circle cx="12" cy="20" r="1"/></svg>',
+  audio:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/></svg>',
+  camera:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3z"/><circle cx="12" cy="13" r="3.5"/></svg>',
+  short:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h9l-1 8 10-12h-9z"/><line x1="3" y1="3" x2="21" y2="21"/></svg>',
+  boot:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
+  drain:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="18" height="10" rx="2"/><line x1="22" y1="11" x2="22" y2="13"/><line x1="6" y1="11" x2="10" y2="11"/></svg>',
+  home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10l9-7 9 7v11a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg>',
+  dmm:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="2" width="18" height="20" rx="2"/><line x1="7" y1="7" x2="17" y2="7"/><circle cx="8" cy="14" r="1.5"/><circle cx="16" cy="14" r="1.5"/><circle cx="12" cy="14" r="1.5"/></svg>',
+  scope:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="14" rx="2"/><path d="M5 12h3l2-4 3 8 2-4h4"/><line x1="8" y1="22" x2="16" y2="22"/></svg>',
+  psu:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="6" y1="10" x2="10" y2="10"/><circle cx="16" cy="12" r="2"/></svg>',
+  station:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h14v6H5z"/><path d="M9 10v3a3 3 0 0 0 6 0v-3"/><line x1="12" y1="16" x2="12" y2="22"/></svg>',
+  hotair:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4"/><path d="M8 6h8l-2 6h-4z"/><path d="M10 12v4a2 2 0 0 0 4 0v-4"/></svg>',
+  micro:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="10" r="5"/><circle cx="12" cy="10" r="2"/><path d="M7 19h10"/><path d="M12 15v4"/></svg>',
+  flash:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 8h10"/><path d="M7 12h6"/><circle cx="17" cy="15" r="1.5"/></svg>',
+  freeze:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="5" y1="5" x2="19" y2="19"/><line x1="19" y1="5" x2="5" y2="19"/></svg>',
+  chevron:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>',
+  check:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>',
+  x:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
+};
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   FAULT DATABASE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+const DB = [
+
+/* 1 ─── NO POWER ──────────────────────────────────────────────── */
+{id:'no-power', cat:'Power', icon:'power',
+ title:'No Power — Completely Dead',
+ sub:'Zero response: no vibration, no LED, no display, no USB enumeration',
+ summary:'A dead phone means the SoC reset line is never released. Work strictly in order: battery → VBAT rail integrity → PMIC inputs → 32 kHz crystal → PMIC rail sequence → boot logic. A dead RTC crystal mimics a dead PMIC identically; scope it before touching any BGA.',
+ tools:['psu','dmm','scope','micro','station','hotair'],
+ lines:[
+   {net:'VBAT / VPH_PWR', dir:'Supply', nom:'3.7–4.35 V', note:'Raw cell feed to PMIC VIN, charger, PA. Single most critical rail.'},
+   {net:'PWR_ON / KEY_PWR', dir:'Input', nom:'1.8 V idle → 0 V pressed', note:'Open-drain pull-up; button pulls to GND. Stuck low = never turns off; open = never turns on.'},
+   {net:'RTC_XI / RTC_XO', dir:'Clock', nom:'32.768 kHz, ~1.5 Vpp sine', note:'PMIC sleep clock. Without it the power sequencer never exits low-power state.'},
+   {net:'PP1V8_S4 / PP_ALWAYS', dir:'Always-on', nom:'1.8 V (before PWR_ON)', note:'Must exist before button press; powers PMIC logic itself.'},
+   {net:'AP_RST_N / SOC_RESET_N', dir:'Output', nom:'Rises high ~200 ms after PWR_ON', note:'Released by PMIC once all boot rails settle. Stays low = PMIC sequencer stuck.'},
+   {net:'VDD_SOC / PP0V9_S0', dir:'Core', nom:'0.85–0.95 V', note:'First CPU rail; heavily decoupled. Missing = SoC never starts.'},
+   {net:'VDDQ / PP0V6_MEM', dir:'RAM', nom:'0.6–1.1 V (LPDDR5/4)', note:'Memory IO rail; comes up after VDD_SOC.'},
+ ],
+ ics:[
+   {name:'Main PMIC', aka:'PM8150 / PMI8998 / MT6373 / S2MPS25', desc:'Sequences all supply rails from VBAT. Contains power-on FSM, RTC input, watchdog. Cracked BGA pad on VIN or VOUT kills one rail silently.'},
+   {name:'32.768 kHz Crystal', aka:'Y1 / XO1 — 2-pin 1.6×1.0 mm SMD', desc:'Hardest fault to diagnose without a scope. Measures ~70 kΩ resistively dead OR alive. Always scope before replacing PMIC.'},
+   {name:'Sub-PMIC', aka:'PM8009 / MT6362 / S2MPB03', desc:'Handles peripheral rails. Misread as dead PMIC when a camera or display rail goes missing.'},
+ ],
+ steps:[
+   {k:'check', title:'Visual & liquid inspection',
+    desc:'Examine under 7× for green corrosion near charging port and PMIC. Check for burned components near USB and cracked traces at screw bosses. Liquid present? Note exact location.',
+    acts:[
+      {t:'Corrosion on VBAT lines near port — #1 cause of total-dead on water-damaged phones', w:'bad'},
+      {t:'Burned resistors/caps near USB — reverse-polarity or ESD event', w:'bad'},
+      {t:'Cracked trace at mid-frame screw boss — drop damage, jumper needed', w:'warn'},
+    ]},
+   {k:'check', title:'Measure battery at connector',
+    desc:'Red probe VBAT+, black probe GND directly at the battery connector on the board.',
+    meas:[
+      {l:'Healthy cell', v:'3.7–4.35 V', s:'ok'},
+      {l:'Deep discharge (revivable)', v:'2.5–3.0 V', s:'warn'},
+      {l:'Dead cell or latched BMS', v:'<1.0 V / 0 V', s:'bad'},
+    ],
+    pf:{
+      ok:{h:'≥ 3.0 V → proceed to step 3', b:'Battery is functional. If 2.5–3.0 V, trickle charge at 100 mA for 15 min to revive BMS before continuing.'},
+      bad:{h:'< 1.0 V → replace battery', b:'Below LiPo safe threshold. Replace with verified OEM cell (OCV should read 3.7–3.9 V before installing). Then retest from step 2.'},
+    }},
+   {k:'test', title:'DC PSU idle current test',
+    desc:'Remove battery. Connect bench PSU: +4.00 V to VBAT pad, GND to GND pad. Current limit 500 mA. Observe BEFORE pressing power button.',
+    meas:[
+      {l:'Normal idle — no short', v:'1–8 mA', s:'ok'},
+      {l:'Suspicious leakage', v:'8–60 mA', s:'warn'},
+      {l:'Active short present', v:'> 80 mA', s:'bad'},
+    ],
+    pf:{
+      ok:{h:'1–8 mA → no VBAT short, PMIC alive', b:'No short. PMIC housekeeping current confirms it is alive. Proceed to step 4: press power button.'},
+      bad:{h:'> 80 mA → diagnose short FIRST', b:'A rail is actively shorted. Go to Short Circuit fault tree. Common: cracked cap on VPH_PWR, blown charger IC input cap, liquid bridge under PMIC BGA.'},
+    }},
+   {k:'test', title:'Press power — observe current spike',
+    desc:'With PSU at 4 V / 500 mA limit, briefly press power button 1–2 seconds. Watch ammeter.',
+    meas:[
+      {l:'Housekeeping before press', v:'1–8 mA', s:'ok'},
+      {l:'PMIC wakes, begins rail sequence', v:'20–60 mA spike within 200 ms', s:'ok'},
+      {l:'CPU boots fully', v:'150–400 mA sustained', s:'ok'},
+      {l:'No change on button press', v:'Flat — PWR_ON or PMIC dead', s:'bad'},
+      {l:'Spike then immediate drop to 0', v:'Brown-out crash', s:'warn'},
+    ],
+    pf:{
+      ok:{h:'Current rises → rails sequencing correctly', b:'PMIC is alive and starting rails. If display stays off, check display fault tree separately. Proceed to step 5 to verify PWR_ON line.'},
+      bad:{h:'No reaction → PWR_ON line or PMIC dead', b:'(a) Probe PWR_ON pin: must go 1.8 V → 0 V on press. Stuck 0 V = shorted button or trace. (b) Check PP1V8_S4 — must be present BEFORE button press. (c) If PWR_ON is correct and PP1V8_S4 is present: proceed to step 6 to test 32k crystal.'},
+    }},
+   {k:'test', title:'Verify 32.768 kHz RTC crystal oscillation',
+    desc:'Scope probe (×10, 100 MHz BW) on RTC_XI or PMIC XIN pin. Trigger rising edge, 50 µs/div. Most-missed check in total-dead diagnosis.',
+    meas:[
+      {l:'Oscillating (healthy)', v:'32.768 kHz, ~1.4–1.8 Vpp sine', s:'ok'},
+      {l:'Dead oscillator', v:'DC flat or < 50 mVpp noise', s:'bad'},
+    ],
+    pf:{
+      ok:{h:'32k clock present → crystal healthy', b:'PMIC has its sleep clock. Fault is in PMIC output sequencing or downstream rails. Proceed to step 6.'},
+      bad:{h:'No 32k clock → replace crystal FIRST', b:'Replace Y1 (1.6 × 1.0 mm, 32.768 kHz, 12.5 pF, ESR < 70 kΩ). Non-polarized. After replacement retest. NEVER reball PMIC before replacing crystal — 30% of "dead PMIC" cases are dead crystals.'},
+    }},
+   {k:'test', title:'Verify PMIC output rail sequence',
+    desc:'On power press, probe each rail with scope. Trigger on PWR_ON. All rails must come up within 500 ms.',
+    acts:[
+      {t:'PP1V8_S4 / PP_ALWAYS (1.8 V): must exist BEFORE PWR_ON is pressed', w:'ok'},
+      {t:'VDD_SOC / PP0V9 (0.85–0.95 V): first CPU rail, within 50 ms of PWR_ON', w:'ok'},
+      {t:'VDD_MX / PP1V0_MX (1.0 V): memory subsystem, within 80 ms', w:'ok'},
+      {t:'VDDQ / PP0V6 (0.6–1.1 V): DRAM IO, within 120 ms', w:'ok'},
+      {t:'Missing rail: measure that rail to GND in diode mode. < 0.1 V = shorted cap downstream', w:'warn'},
+    ],
+    pf:{
+      ok:{h:'All rails sequenced → PMIC functional', b:'PMIC working. AP_RST_N should go high ~200 ms after last rail. If it stays low: check eMMC/UFS power — bootloader requires storage alive before releasing reset. Go to Boot Loop tree.'},
+      bad:{h:'Rail(s) missing → cap short or PMIC LDO failed', b:'Lift each decoupling cap on the dead rail. If rail comes up after removing a cap, that cap was shorted. If all caps removed and still dead: that PMIC LDO is internally damaged → reball or replace PMIC.'},
+    }},
+   {k:'fix', title:'Repair actions by confirmed root cause',
+    acts:[
+      {t:'Dead battery (< 2.5 V or puffed): replace. Verify new cell OCV 3.7–3.9 V before installing', w:'ok'},
+      {t:'Shorted cap on VBAT: freeze-spray locate, hot-air remove at 320 °C, replace 10 µF 6.3 V X5R 0402', w:'ok'},
+      {t:'Dead 32k crystal: replace Y1, same spec, non-polarized. Source: Murata CSTCE32M768GH0-R0 or equivalent', w:'ok'},
+      {t:'Broken PWR_ON trace: jumper with 38 AWG wire from switch pad to PMIC pin under microscope', w:'ok'},
+      {t:'Dead PMIC LDO (all downstream caps confirmed good): reball PMIC at 215 °C peak, 150 °C preheat 90 s', w:'warn'},
+    ]},
+   {k:'danger', title:'Critical safety rules',
+    acts:[
+      {t:'NEVER exceed 4.40 V on VBAT pad — destroys downstream caps and kills baseband instantly', w:'bad'},
+      {t:'NEVER power on without PSU current limiting — hidden short becomes a PCB fire', w:'bad'},
+      {t:'NEVER reball PMIC before scoping the RTC crystal and testing all downstream caps', w:'warn'},
+    ]},
+ ],
+ verify:['Phone vibrates on power button press','Boot animation within 30 seconds','IMEI readable via *#06#','USB device detected by PC within 10 seconds','Charge current ≥ 500 mA from OEM charger'],
+ mistakes:[
+   {e:'🪤', t:'Replacing the PMIC first', d:'PMIC is rarely dead. 80% of "dead PMIC" diagnoses are a shorted cap, dead crystal, or broken PWR_ON trace. Reball costs 45 min and risks pad lift. Exhaust every check first.'},
+   {e:'🪫', t:'Skipping the PSU idle-current test', d:'Powering a shorted board with a battery vaporizes the cap and etches the PCB. Always see idle draw before pressing anything.'},
+   {e:'🔭', t:'Not scoping the 32k crystal', d:'DMM reads 70–80 kΩ on a dead crystal — identical to a live one. You cannot test a crystal without a scope.'},
+ ]},
+
+/* 2 ─── NO CHARGING ───────────────────────────────────────────── */
+{id:'no-charging', cat:'Power', icon:'charge',
+ title:'Not Charging / Slow Charge',
+ sub:'Rejects charger, blinks charge icon, stops at a percentage, or shows "charging paused — temperature"',
+ summary:'Charging path: USB-C port → VBUS fuse → charger IC → battery FET → cell. Any break kills charging. CC1/CC2 lines must handshake for PD negotiation. NTC thermistor must read in-range or charger IC blocks current for safety.',
+ tools:['psu','dmm','scope','micro','station','hotair'],
+ lines:[
+   {net:'VBUS', dir:'Input', nom:'4.75–5.25 V (5W) / 9 V (18W PD)', note:'Must reach charger IC VIN. Blown fuse kills VBUS without damaging port.'},
+   {net:'CC1 / CC2', dir:'Protocol', nom:'0.8–1.8 V + BMC modulation', note:'Both at 0 V simultaneously = CC shorted to GND (corrosion). One at 0 V = correct for cable orientation.'},
+   {net:'CHG_EN', dir:'Control', nom:'1.8 V (active)', note:'SoC/PMIC tells charger IC to allow current. Stuck 0 V = software suspended.'},
+   {net:'BAT_NTC', dir:'Analog', nom:'10 kΩ @ 25 °C (β=3380)', note:'Battery thermistor. Open or short halts charging for thermal safety.'},
+   {net:'VBAT_CHG / SYS', dir:'Output', nom:'4.0–4.45 V rising during charge', note:'Charger IC output feeding through battery protection FET to cell.'},
+   {net:'SDA_CHG / SCL_CHG', dir:'I2C', nom:'400 kHz, ACK every byte', note:'SoC configures charger IC. No ACK = IC unpowered or I2C bus shorted.'},
+ ],
+ ics:[
+   {name:'Charger IC', aka:'BQ25970 / BQ25890 / SMB1390 / MT6370 / HL7139', desc:'Switched-capacitor or buck converter stepping USB voltage to battery voltage. Contains OVP, UVLO, thermal protection, I2C register map.'},
+   {name:'USB-C Connector', aka:'24-pin reversible, spring CC contacts', desc:'CC spring contacts are highest-wear point. Slight corrosion or bent pin kills PD negotiation. Inner 4 pins (VBUS/GND) handle power; CC1/CC2 handle protocol.'},
+   {name:'Input Fuse / eFuse', aka:'F1, FL1 — 0402/0603, 1–3 A', desc:'On VBUS line between port and charger IC. Blows on reverse-polarity or ESD. Looks like a broken wire in continuity mode.'},
+   {name:'Battery Protection IC', aka:'FS312F-G / S-8261 / DW01A + 8205A', desc:'Inside battery module. Cuts discharge FET on OV/UV/OC. Latched protection makes battery read 0 V even with cell at 3.9 V.'},
+ ],
+ steps:[
+   {k:'check', title:'Classify failure mode',
+    desc:'Symptom pattern narrows fault zone before any measurement.',
+    acts:[
+      {t:'"No charge icon at all" → VBUS fuse blown, port dead, or charger IC completely failed', w:'warn'},
+      {t:'"Icon shows but 0% never rises" → charger enabled but battery FET or BMS latched', w:'warn'},
+      {t:'"Charges then stops / blinks" → NTC thermistor fault or intermittent CC contact', w:'warn'},
+      {t:'"Charges slow only" → PD negotiation failing; test with OEM cable', w:'warn'},
+      {t:'"Charging paused — temperature" → NTC out of range OR charger IC thermal fault register', w:'warn'},
+    ]},
+   {k:'test', title:'Verify VBUS reaches charger IC VIN',
+    desc:'Probe VBUS on the board side of the input fuse (between fuse and charger IC VIN). Not at the port — a good port reading tells you nothing about downstream.',
+    meas:[
+      {l:'VBUS at charger VIN', v:'4.75–5.25 V', s:'ok'},
+      {l:'5 V at port, 0 V at charger', v:'Fuse blown', s:'bad'},
+      {l:'0 V everywhere with charger plugged', v:'Port, cable, or adapter fault', s:'bad'},
+    ],
+    pf:{
+      ok:{h:'≥ 4.75 V at charger VIN → input path intact', b:'Fuse good. Proceed to step 3 for CC line check.'},
+      bad:{h:'0 V at charger → blown fuse or shorted IC input', b:'Measure fuse continuity. Replace with same amperage (typically 1–2 A 0402). If fuse re-blows immediately: charger IC VIN cap or IC itself is shorted — test charger IC VIN to GND in diode mode first.'},
+    }},
+   {k:'test', title:'Check CC1 / CC2 line voltages',
+    desc:'Insert known-good cable and charger. Probe CC1 and CC2 at board pads near port.',
+    meas:[
+      {l:'Active CC (correct orientation)', v:'0.8–1.8 V DC + BMC modulation', s:'ok'},
+      {l:'Inactive CC (other orientation)', v:'0 V (Rd pulldown only)', s:'ok'},
+      {l:'Both CC at 0 V', v:'CC shorted to GND', s:'bad'},
+      {l:'CC in diode mode (power off)', v:'0.45–0.55 V', s:'ok'},
+      {l:'CC in diode mode shorted', v:'0 Ω to GND', s:'bad'},
+    ],
+    pf:{
+      ok:{h:'CC voltages in range → PD handshake working', b:'USB-PD negotiation live. Fault is downstream of charger IC. Proceed to step 4.'},
+      bad:{h:'CC at 0 V or ESD array shorted', b:'(a) Inspect port CC pins under microscope for bend or corrosion. (b) Remove TVS ESD array (PRTR5V0U2X or similar SOT-363) and retest. (c) If port and ESD are clean: PD controller inside SoC damaged.'},
+    }},
+   {k:'test', title:'Verify charger IC I2C ACK',
+    desc:'Scope SDA/SCL at charger IC on plug-in event. SoC must write I2C to start charging.',
+    meas:[
+      {l:'CHG_EN pin (plugged in)', v:'1.8 V', s:'ok'},
+      {l:'I2C SCL during plug-in', v:'400 kHz clock bursts', s:'ok'},
+      {l:'I2C SDA ACK', v:'Pulled low by IC after each byte', s:'ok'},
+      {l:'CHG_EN stuck 0 V', v:'Software suspend or trace open', s:'bad'},
+      {l:'No I2C ACK', v:'Charger IC unresponsive', s:'bad'},
+    ],
+    pf:{
+      ok:{h:'I2C ACK present → charger IC responding', b:'Software communication working. Proceed to step 5 for charge current measurement.'},
+      bad:{h:'No ACK → charger IC not responding', b:'(a) Verify IC VIN ≥ 4.75 V. (b) Check I2C pull-ups (4.7 kΩ to 1.8 V). (c) If VIN good and pull-ups present: charger IC I2C block dead → replace charger IC.'},
+    }},
+   {k:'check', title:'Measure NTC thermistor resistance',
+    desc:'Probe battery NTC line at board connector (typically pin 3 of 4-pin connector).',
+    meas:[
+      {l:'Room temp (25 °C)', v:'10 kΩ ±5%', s:'ok'},
+      {l:'Cold (0 °C)', v:'~27 kΩ', s:'ok'},
+      {l:'Warm (40 °C)', v:'~5.4 kΩ', s:'ok'},
+      {l:'Open / disconnected', v:'> 1 MΩ', s:'bad'},
+      {l:'Shorted thermistor', v:'< 500 Ω', s:'bad'},
+    ],
+    pf:{
+      ok:{h:'~10 kΩ → thermistor healthy', b:'Thermal sensing working. Charger IC will permit charging. Fault is elsewhere.'},
+      bad:{h:'Open or shorted → NTC fault blocking charge', b:'NTC element inside battery pack failed. Replace battery module. Diagnostic only (NOT permanent): solder 10 kΩ resistor across NTC line to confirm NTC is the sole fault.'},
+    }},
+   {k:'fix', title:'Repair actions',
+    acts:[
+      {t:'Dirty/corroded port: clean with IPA + brass brush, or replace Type-C connector (380 °C, 80 L/min, 60 s dwell)', w:'ok'},
+      {t:'Blown input fuse: replace 0402 fuse, same amperage. If re-blows: charger IC input is shorted — replace IC first', w:'ok'},
+      {t:'Shorted CC TVS: remove SOT-363 array, retest, replace with same part', w:'ok'},
+      {t:'Dead charger IC: hot-air 370 °C, reball 0.25 mm if needed', w:'warn'},
+      {t:'Latched battery BMS: apply 4.0 V / 50 mA directly across cell contacts for 30 s (forces BMS recovery)', w:'ok'},
+    ]},
+   {k:'danger', title:'Critical warnings',
+    acts:[
+      {t:'NEVER bridge CC to VBUS — max CC voltage is 3.6 V; VBUS kills PD controller in SoC', w:'bad'},
+      {t:'NEVER charge a puffed battery — if swollen > 0.5 mm at center, dispose safely before repair', w:'bad'},
+    ]},
+ ],
+ verify:['Charge icon within 10 seconds of OEM charger connect','Charge current ≥ 500 mA at 5 V','Battery % rises 1% per 2–4 minutes at fast charge','No "charging paused" in 15-minute test','CC line BMC traffic visible on POWER-Z analyzer'],
+ mistakes:[
+   {e:'🔌', t:'Using a power-only cable for diagnosis', d:'USB-C cables without e-marker report as "no PD adapter". Always start with OEM cable and adapter.'},
+   {e:'🧱', t:'Replacing charger IC without checking fuse', d:'Fuse check takes 30 seconds. Charger IC swap takes 30 minutes. Check fuse first.'},
+   {e:'🌡️', t:'Ignoring NTC without measuring it', d:'Open NTC mimics dead charger IC perfectly. Always ring out thermistor before touching ICs.'},
+ ]},
+
+/* 3 ─── NO DISPLAY ────────────────────────────────────────────── */
+{id:'no-display', cat:'Display', icon:'display',
+ title:'No Display / Black Screen',
+ sub:'Phone confirmed ON (vibrates, plays audio, USB detected) but screen completely black',
+ summary:'Split first: LCD with faint torch image = backlight dead. Truly black = panel or MIPI driver dead. Then isolate board-side (rails, MIPI, reset) vs panel-side (FPC, DDIC). Swap known-good display to divide the problem in one step.',
+ tools:['dmm','scope','micro','station','psu'],
+ lines:[
+   {net:'VLED+ / VLED-', dir:'Supply', nom:'18–24 V (LCD backlight)', note:'LCD only. VLED+ feeds LED string cathode. 0 V here = backlight boost IC dead.'},
+   {net:'ELVDD', dir:'Supply', nom:'+4.6 V (AMOLED)', note:'OLED drive voltage. Panel dark without it even if DDIC alive.'},
+   {net:'ELVSS', dir:'Supply', nom:'−1.4 to −3.0 V (AMOLED)', note:'Negative rail for AMOLED bias. Must coexist with ELVDD.'},
+   {net:'AVDD', dir:'Supply', nom:'+5.5 V (LCD) / +4.6 V (AMOLED)', note:'Panel analog supply from board-side IC.'},
+   {net:'LCM_RST / DISP_RST_N', dir:'Logic', nom:'Pulse low → 1.8 V at boot', note:'Stuck low = DDIC never initializes. SoC holds it low until all rails valid.'},
+   {net:'DSI_CLK_P/N', dir:'MIPI', nom:'400–800 MHz differential', note:'Master clock from SoC GPU. Missing = SoC not driving panel.'},
+   {net:'DSI_D0–D3 ±', dir:'MIPI', nom:'HS: 200 mV differential swing', note:'Data lanes. One broken lane = driver error and black screen.'},
+ ],
+ ics:[
+   {name:'Backlight Boost IC (LCD)', aka:'TPS61187 / LM36274 / SM5107 / OZ9998', desc:'Generates 18–24 V from VBAT to drive LED string. Most common failure: output capacitor short. Test in diode mode: VLED+ to GND should read 0.4–0.6 V (not short).'},
+   {name:'Display DC-DC (AMOLED)', aka:'S2DOS05 / MAX77705D / DW8768', desc:'Generates AVDD, ELVDD, ELVSS from VBAT. On FPC or main board. After drop, output caps crack pulling rails down.'},
+   {name:'Display Driver IC (DDIC)', aka:'S6E3FC5 / EA8076 / NT36672 / ILI9882T', desc:'On the glass panel itself. Crack from drop causes pink bars, partial black, or full black. Not repairable — replace panel assembly.'},
+ ],
+ steps:[
+   {k:'check', title:'Confirm phone is actually ON',
+    desc:'A truly dead phone and dead-display look identical from the front. Confirm before any display work.',
+    acts:[
+      {t:'Connect charger — does charge LED / icon appear?', w:'ok'},
+      {t:'Connect USB to PC — device appears in Device Manager / System Information?', w:'ok'},
+      {t:'Call the phone — vibrates or plays ringtone?', w:'ok'},
+      {t:'TORCH TEST: in dark room, press bright flashlight at 45° angle against screen — any faint image visible?', w:'warn'},
+    ],
+    pf:{
+      ok:{h:'Phone IS on → display-only fault confirmed', b:'Continue to torch test result in step 2.'},
+      bad:{h:'Phone NOT on → wrong fault tree', b:'Go to No Power fault tree. This tree applies only when device is confirmed running.'},
+    }},
+   {k:'check', title:'Torch test — split backlight vs panel fault',
+    desc:'In dark room, press screen against a bright flashlight. Any faint shadow of UI visible?',
+    pf:{
+      ok:{h:'Faint image visible → BACKLIGHT dead (LCD only)', b:'Panel and MIPI are working. Skip to step 4 (backlight rail). No need for MIPI scope.'},
+      bad:{h:'Truly black, no image → MIPI or panel fault', b:'No signal reaching panel. Reseat FPC (step 3), then check panel rails (step 4), then scope MIPI (step 5).'},
+    }},
+   {k:'check', title:'Reseat display FPC',
+    desc:'Power off. Disconnect FPC connector. Inspect under 10× for lifted pins, corrosion, cracked ribbon at bend (10–15 mm from connector). Clean with IPA, reseat firmly.',
+    pf:{
+      ok:{h:'Reseat restores display → FPC fault', b:'Done. Inspect why FPC was loose: missing foam pad, prior repair did not lock ZIF. Reinforce.'},
+      bad:{h:'Still black → deeper fault', b:'FPC not the cause. Proceed to rail measurements.'},
+    }},
+   {k:'test', title:'Measure panel supply rails',
+    desc:'Phone powered on, FPC connected. Probe nearest decoupling caps to display connector.',
+    meas:[
+      {l:'ELVDD (AMOLED)', v:'+4.6 V ±0.2', s:'ok'},
+      {l:'ELVSS (AMOLED)', v:'−1.4 to −3.0 V', s:'ok'},
+      {l:'AVDD (LCD logic)', v:'+5.5 V ±0.3', s:'ok'},
+      {l:'VLED+ (LCD backlight)', v:'18–24 V when display enabled', s:'ok'},
+      {l:'Any rail at 0 V', v:'Supply failure', s:'bad'},
+    ],
+    pf:{
+      ok:{h:'All rails present → supply side healthy', b:'Power to panel confirmed. Fault is MIPI signal or panel. Proceed to step 5.'},
+      bad:{h:'Missing rail → source IC failed or cap shorted', b:'Find which IC generates the missing rail (schematic). Check that IC\'s VIN and EN pin. If VIN OK, EN high, output dead: IC failed. Hot-air remove and replace. For VLED+ shorted: remove caps on that rail one by one to find the shorted one.'},
+    }},
+   {k:'test', title:'Scope MIPI DSI clock lane',
+    desc:'200 MHz differential probe on DSI_CLK_P/N. Set trigger on LCM_RST rising edge. Activity expected within 100 ms.',
+    meas:[
+      {l:'DSI clock (HS mode)', v:'400–800 MHz differential', s:'ok'},
+      {l:'LP-11 idle (both lanes)', v:'1.2 V before HS burst', s:'ok'},
+      {l:'No signal', v:'Flat 0 V or stuck 1.2 V', s:'bad'},
+    ],
+    pf:{
+      ok:{h:'MIPI clock active → SoC driving panel', b:'GPU alive. Fault is panel-side (DDIC or FPC). Swap panel to confirm.'},
+      bad:{h:'No MIPI clock → SoC not sending display data', b:'(a) Verify LCM_RST goes high (1.8 V) after boot. (b) Confirm display LDOs enabled (DSI PHY won\'t clock without VDDIO). (c) If all correct but still no clock: SoC GPU cold joint. Reball SoC as last resort.'},
+    }},
+   {k:'check', title:'Check LCM_RST state',
+    desc:'Scope LCM_RST during boot. Should pulse low then settle to 1.8 V.',
+    meas:[
+      {l:'LCM_RST idle', v:'1.8 V', s:'ok'},
+      {l:'LCM_RST boot pulse', v:'0 V for 10–50 ms then 1.8 V', s:'ok'},
+      {l:'LCM_RST stuck low', v:'0 V always', s:'bad'},
+    ],
+    pf:{
+      ok:{h:'RST pulsed correctly → DDIC received reset', b:'All signals correct from board. DDIC on the panel glass is not responding or is damaged. Replace display assembly.'},
+      bad:{h:'RST stuck low → PMIC not releasing', b:'A required panel rail never came up. Go back to step 4 and recheck all display rails carefully.'},
+    }},
+   {k:'fix', title:'Repair actions',
+    acts:[
+      {t:'Cracked FPC: bridge individual traces with 38 AWG wire under microscope. If multi-trace fracture at flex zone: replace assembly', w:'warn'},
+      {t:'Dead ELVDD/ELVSS IC: replace S2DOS05 or equivalent at 360 °C, 100 L/min', w:'ok'},
+      {t:'Dead backlight boost (LCD): replace LM36274 / TPS61187. Stencil + 245 °C reflow', w:'ok'},
+      {t:'Shorted VLED+ cap: freeze-spray, remove cap, replace 1 µF 25 V X7R 0201', w:'ok'},
+      {t:'Damaged DDIC: replace display assembly — DDIC is bonded to glass, not field-repairable', w:'ok'},
+    ]},
+   {k:'danger', title:'Critical warnings',
+    acts:[
+      {t:'NEVER connect display FPC while board is powered — hot-plug ESD kills DDIC permanently', w:'bad'},
+      {t:'NEVER apply voltage above 5.5 V to AVDD — DDIC gate oxide ratings exceeded', w:'bad'},
+    ]},
+ ],
+ verify:['Boot animation visible on power-up','Screen visible in daylight at full brightness','No flickering or color bands','Backlight dims smoothly 0–100%','No LCM_RST recurrence after 3 power cycles'],
+ mistakes:[
+   {e:'🖥️', t:'Replacing display before checking board-side rails', d:'60% of AMOLED black-screen faults are missing ELVDD/ELVSS on the board. A $80 panel does nothing if the rail is dead.'},
+   {e:'🔌', t:'Plugging FPC with power on', d:'Each hot-plug risks ESD pulse killing the DDIC. Remove only with power off.'},
+   {e:'🔦', t:'Skipping the torch test', d:'Torch test instantly splits LCD backlight faults from panel faults — saves 15 minutes of unnecessary rail measurements.'},
+ ]},
+
+/* 4 ─── TOUCHSCREEN ───────────────────────────────────────────── */
+{id:'no-touch', cat:'Display', icon:'touch',
+ title:'Touch Dead or Erratic',
+ sub:'Display shows image but touch has no response, zones dead, or ghost inputs',
+ summary:'Touch controller (I2C or SPI) scans an ITO/metal-mesh grid. Must have AVDD + VIO, a valid RST pulse, and I2C ACK before SoC driver registers input. Ghost touches come from liquid contamination, ITO cracks with floating nodes, or failed controller leakage.',
+ tools:['dmm','scope','micro','station'],
+ lines:[
+   {net:'TP_VDD / AVDD', dir:'Supply', nom:'3.0–3.3 V', note:'Touch controller analog supply. Missing = controller dead before it starts.'},
+   {net:'TP_VIO / IOVDD', dir:'Supply', nom:'1.8 V', note:'Digital IO supply for SDA/SCL level compatibility with SoC.'},
+   {net:'TP_RST', dir:'Logic', nom:'Pulse low 10 ms then 1.8 V', note:'SoC resets controller at boot. Stuck low = controller in permanent reset.'},
+   {net:'TP_INT', dir:'Logic out', nom:'Active low pulse on touch detect', note:'Interrupt to SoC. Stuck low = data ready line shorted.'},
+   {net:'TP_SDA / TP_SCL', dir:'I2C', nom:'SCL 400 kHz; SDA ACK = pulled low', note:'Flat-line SDA with SCL running = controller not ACK-ing.'},
+ ],
+ ics:[
+   {name:'Touch Controller', aka:'Synaptics S3706 / TD4150 / Goodix GT9886 / FocalTech FT5436', desc:'Scans ITO grid rows and columns at 120–240 Hz. After drop damage, BGA balls crack. After liquid, internal IO leaks. Firmware version must match panel config on multi-vendor boards.'},
+   {name:'ITO / Metal-mesh digitizer', aka:'Bonded to display glass', desc:'Optically clear conductive traces. Hairline glass cracks break ITO. Dead zone correlates exactly with crack position. Not repairable — replace panel.'},
+ ],
+ steps:[
+   {k:'check', title:'Classify touch failure',
+    acts:[
+      {t:'"Completely dead" → power, reset, or I2C bus fault', w:'warn'},
+      {t:'"Dead zone / lower half only" → broken ITO column → replace panel', w:'bad'},
+      {t:'"Ghost touches jumping randomly" → liquid under panel or floating ITO node', w:'warn'},
+      {t:'"Works sometimes / needs firm press" → cracked FPC or intermittent I2C', w:'warn'},
+      {t:'"Wrong coordinate mapping" → firmware ID mismatch, not hardware', w:'ok'},
+    ]},
+   {k:'check', title:'Reseat touch FPC',
+    desc:'On Samsung, Xiaomi, Oppo — touch may have its own FPC separate from display. Power off, unlock ZIF, clean with IPA, reseat firmly.',
+    pf:{
+      ok:{h:'Reseat fixes it → loose FPC', b:'Reinforce with foam spacer. Inspect why it came loose.'},
+      bad:{h:'Still dead → proceed to power measurement', b:'FPC not the cause.'},
+    }},
+   {k:'test', title:'Measure TP_VDD (3.3 V) and TP_VIO (1.8 V)',
+    desc:'Phone on. Probe supply pins at touch controller or nearest decoupling cap.',
+    meas:[
+      {l:'TP_VDD', v:'3.0–3.3 V', s:'ok'},
+      {l:'TP_VIO', v:'1.8 V ±0.1', s:'ok'},
+      {l:'Either supply at 0 V', v:'LDO disabled or dead', s:'bad'},
+      {l:'Supply droops < 2.8 V', v:'Shorted cap or LDO current limited', s:'warn'},
+    ],
+    pf:{
+      ok:{h:'Both supplies correct → power healthy', b:'Proceed to RST and I2C checks.'},
+      bad:{h:'Supply missing → trace source LDO', b:'Find PMIC LDO supplying TP_VDD. Check enable pin (SoC GPIO must be high). If enable high and output 0 V: LDO or shorted output cap.'},
+    }},
+   {k:'test', title:'Scope TP_RST pulse at boot',
+    desc:'Scope RST pin during power-on. 50 ms/div, trigger rising edge.',
+    meas:[
+      {l:'Normal RST', v:'0 V for 10–20 ms, then 1.8 V', s:'ok'},
+      {l:'RST stuck low', v:'0 V always', s:'bad'},
+    ],
+    pf:{
+      ok:{h:'RST pulsed → controller received reset', b:'Reset line working. Move to I2C bus check.'},
+      bad:{h:'RST stuck low → controller in permanent reset', b:'Trace RST from SoC GPIO to controller. Check for pull-down short. Also: dead controller oscillator can pull RST low via internal feedback.'},
+    }},
+   {k:'test', title:'Scope I2C bus (TP_SDA / TP_SCL)',
+    desc:'Both lines need 4.7 kΩ pull-ups to 1.8 V. SoC driver reads chip ID within 500 ms of RST going high.',
+    meas:[
+      {l:'SCL clock', v:'400 kHz bursts, 0–1.8 V', s:'ok'},
+      {l:'SDA ACK', v:'Pulled low by IC after each byte', s:'ok'},
+      {l:'SDA idle', v:'1.8 V (resistor pull-up)', s:'ok'},
+      {l:'SCL stuck 0 V', v:'Bus shorted or pull-up missing', s:'bad'},
+      {l:'SDA stuck 0 V', v:'SDA shorted to GND', s:'bad'},
+    ],
+    pf:{
+      ok:{h:'I2C ACK → controller alive', b:'Hardware communication working. If touch still dead: wrong firmware config for aftermarket panel, or ITO cracked (step 5).'},
+      bad:{h:'No ACK or stuck bus → IC or I2C line fault', b:'(a) Check SDA/SCL to GND in diode mode for shorts. (b) Verify 4.7 kΩ pull-ups present. (c) If bus clean but no ACK: reflow controller IC at 245 °C. If no change, replace controller.'},
+    }},
+   {k:'check', title:'Inspect digitizer for ITO damage (ghost / zone dead)',
+    desc:'Hold screen against bright light at 45°. Look for hairline cracks across touch area.',
+    acts:[
+      {t:'Crack running across touch area = dead row or column at that exact location', w:'bad'},
+      {t:'Ghost touches only on one horizontal stripe = shorted column from glass flex', w:'bad'},
+      {t:'Ghost touches only when charger plugged = charger noise coupling; try grounded OEM charger', w:'warn'},
+      {t:'Ghost touches after water exposure = dry 48 h silica gel + 40 °C then retest before concluding hardware failure', w:'warn'},
+    ]},
+   {k:'fix', title:'Repair actions',
+    acts:[
+      {t:'Dead TP_VDD: find shorted cap on LDO output, remove; or enable stuck GPIO', w:'ok'},
+      {t:'Broken RST trace: jumper 38 AWG from SoC GPIO test pad to TP_RST pad', w:'ok'},
+      {t:'Dead controller (no ACK after reflow): replace same-model BGA; match firmware', w:'warn'},
+      {t:'Open pull-up: solder 4.7 kΩ 0201 from SDA or SCL to TP_VIO', w:'ok'},
+      {t:'ITO crack: replace display assembly — no field repair for ITO', w:'ok'},
+    ]},
+ ],
+ verify:['All 10 touch points register in diagnostics (*#*#2664#*#*)','Swipe from top triggers notification shade','No phantom taps in 5-minute idle test','Touch response latency normal (no lag)','Touch stable after 10 power cycles'],
+ mistakes:[
+   {e:'🪄', t:'Factory reset to fix hardware touch', d:'Software cannot repair a broken ITO layer or dead controller IC.'},
+   {e:'🎲', t:'Swapping display before checking I2C', d:'If SDA is held low by shorted TVS, a new screen also shows dead touch.'},
+   {e:'🌊', t:'Declaring ghost touches as hardware without drying', d:'Liquid ionic conductance causes real ghost touches that vanish after 48-hour desiccant dry.'},
+ ]},
+
+/* 5 ─── SHORT CIRCUIT ─────────────────────────────────────────── */
+{id:'short', cat:'Power', icon:'short',
+ title:'Short Circuit on Power Rail',
+ sub:'Board draws excess current, gets hot immediately, or component burns on power-up',
+ summary:'Almost always a failed MLCC capacitor (cracked by drop/flex) or IC internal junction failure. Never apply full battery voltage to a shorted board — current vaporizes the part and etches the PCB. Use current-limited DC PSU and thermal detection to localize before removing anything.',
+ tools:['psu','dmm','freeze','micro','hotair','station'],
+ lines:[
+   {net:'Any supply rail', dir:'Supply', nom:'Diode mode: 0.40–0.65 V to GND', note:'Any rail measuring < 0.1 V in diode mode has a hard short. 0.10–0.40 V = soft short or large cap bank.'},
+   {net:'VBAT / VPH_PWR', dir:'Primary', nom:'Idle 1–8 mA @ 4 V PSU', note:'Most commonly shorted since every domain branches here.'},
+ ],
+ ics:[
+   {name:'MLCC Capacitors', aka:'0201 / 0402 X5R/X7R everywhere on power rails', desc:'#1 cause of shorts. A cracked X5R cap can measure 0 Ω DC and cause 3 A+ draw. Crack often invisible at 10×; may need 40× oblique lighting or dye penetrant to see.'},
+   {name:'PMIC / Charger IC', aka:'Internal junction failure post-ESD or liquid', desc:'PMIC output FET can fail short. Distinguishable from cap: remove all caps on a rail and short remains = IC is the culprit.'},
+   {name:'Power Amplifier BST cap', aka:'PA BST capacitor on VPA rail', desc:'100 nF 0201 cap on PA VCC line. Frequently fails after reverse-polarity. Very small; easy to miss.'},
+ ],
+ steps:[
+   {k:'check', title:'Confirm and classify the short',
+    desc:'NEVER connect battery to suspected shorted board. Use DC PSU at 4.0 V, current limit 100 mA.',
+    meas:[
+      {l:'Diode mode on VBAT (board off)', v:'0.40–0.65 V', s:'ok'},
+      {l:'Soft short (large cap bank)', v:'0.20–0.40 V', s:'warn'},
+      {l:'Hard short', v:'0–0.10 V', s:'bad'},
+      {l:'PSU at compliance (4 V, limit 100 mA)', v:'> 50 mA', s:'bad'},
+    ],
+    pf:{
+      ok:{h:'Diode reading normal → no short on this rail', b:'Check other rails. VBAT OK does not mean VDD_CPU or PP1V8 is OK.'},
+      bad:{h:'Diode < 0.1 V → hard short confirmed', b:'Proceed to thermal localization. Do NOT apply battery voltage. Note which rail is shorted.'},
+    }},
+   {k:'check', title:'Localize short with thermal detection',
+    desc:'Connect PSU to shorted rail at 1.0 V, current limit 500 mA. Shorted component heats within 10–30 seconds.',
+    acts:[
+      {t:'METHOD A — IPA mist: spray lightly across area. Frost evaporates first at the hot/shorted part. Works at room temp', w:'ok'},
+      {t:'METHOD B — Thermal camera (InfiRay P2 Pro): apply PSU, wait 15 s, examine frame. Shorted part is 5–15 °C above surroundings', w:'ok'},
+      {t:'METHOD C — Freeze spray: apply to board area, power on — shorted part frost clears first', w:'ok'},
+      {t:'CRITICAL: Narrow to specific component BEFORE removing anything', w:'warn'},
+    ]},
+   {k:'check', title:'Remove suspect component and retest',
+    desc:'Power off PSU completely. Hot-air or fine-tip to remove identified component. Allow 60 s cool. Recheck diode mode.',
+    pf:{
+      ok:{h:'Short gone after removal → faulty component confirmed', b:'Replace with exact value: VBAT cap = 10 µF 6.3 V X5R 0402 (e.g. Murata GRM155R60J106ME11). VDD_CPU = 4.7 µF 10 V X7R 0402. PP1V8 = 1 µF 10 V X7R 0201.'},
+      bad:{h:'Short remains after all caps removed → IC internal short', b:'The IC whose regulator drives this rail has internal MOSFET failure. Reball or replace that IC. For PMIC: specific LDO FET shorted.'},
+    }},
+   {k:'test', title:'Verify repair — PSU idle current',
+    desc:'After replacing component, reconnect PSU at 4.0 V, 500 mA limit.',
+    meas:[
+      {l:'Idle (before power press)', v:'1–8 mA', s:'ok'},
+      {l:'Diode mode after repair', v:'0.40–0.65 V', s:'ok'},
+      {l:'Still elevated idle', v:'> 40 mA', s:'bad'},
+    ],
+    pf:{
+      ok:{h:'1–8 mA and diode normal → short resolved', b:'Proceed to full boot test. Monitor temperature for 2 minutes — should not exceed 35 °C.'},
+      bad:{h:'Still > 40 mA → additional shorted component', b:'Multiple components may be shorted on same rail. Repeat thermal localization.'},
+    }},
+   {k:'danger', title:'Critical warnings',
+    acts:[
+      {t:'NEVER apply battery voltage to find a short — instantaneous PCB erosion, possible fire', w:'bad'},
+      {t:'NEVER use freeze spray near an open flame or hot iron — propellant is flammable', w:'bad'},
+      {t:'NEVER "power on and see what burns" — destroys traces and adjacent ICs', w:'bad'},
+    ]},
+ ],
+ verify:['Diode-mode on repaired rail: 0.40–0.65 V','PSU idle 1–8 mA at 4.0 V','No component above 35 °C after 2 minutes idle','Full boot completes without PSU current limit tripping','Charge current accepted normally'],
+ mistakes:[
+   {e:'🔋', t:'Connecting real battery to shorted board', d:'LiPo sources 10–30 A. Shorted cap absorbs this as heat — vaporizes, solder splashes, traces etch. Always PSU with current limit.'},
+   {e:'🎯', t:'Removing caps without thermal localization first', d:'Thermal localization pins the faulty cap in 30 seconds. Blind removal damages pads unnecessarily.'},
+   {e:'🔄', t:'Wrong replacement cap value', d:'0402 footprint can hold 100 nF, 1 µF, 4.7 µF, or 10 µF. Wrong value causes rail instability. Verify from schematic.'},
+ ]},
+
+/* 6 ─── NO CELLULAR ───────────────────────────────────────────── */
+{id:'network', cat:'Radio', icon:'network',
+ title:'No Cellular Signal / No Service',
+ sub:'Device shows "No Service", "Searching…", 0 bars, or null IMEI',
+ summary:'RF fault cascade: antenna → switch → PA → duplexer → transceiver → baseband. First split: null IMEI = firmware NV issue, not hardware. IMEI present but no signal: check antenna springs (80% of weak-signal complaints), then PA supply, then TCXO reference clock, then transceiver.',
+ tools:['dmm','scope','micro','station','flash'],
+ lines:[
+   {net:'VPA (PA supply)', dir:'Supply', nom:'3.4–3.8 V during TX (envelope tracked)', note:'PA supply. Missing = no TX power even if RX works.'},
+   {net:'VIO_RFFE', dir:'Supply', nom:'1.8 V', note:'RFFE bus supply. Powers configuration bus to PA, switch, LNA.'},
+   {net:'RFFE_CLK / RFFE_DATA', dir:'MIPI RFFE', nom:'26 MHz clock, 3 Mbps data', note:'SoC configures band selection, gain, TX/RX mode on every call.'},
+   {net:'TCXO / RFCLK', dir:'Clock', nom:'19.200 or 38.400 MHz, ±0.1 ppm', note:'Reference clock to transceiver. Dead TCXO prevents modem initialization.'},
+   {net:'ANT_MAIN / ANT_DIV', dir:'RF', nom:'50 Ω impedance', note:'Main + diversity antenna feeds via spring pogo contacts.'},
+ ],
+ ics:[
+   {name:'Power Amplifier Module', aka:'Skyworks SKY78020 / Qorvo QPM56xx / Murata MXHS83', desc:'Multi-band PA module containing TX amplifier for each band. After ESD or antenna-disconnected-TX event, output stage fails open or short.'},
+   {name:'Antenna Switch', aka:'SKY13545 / RF5264 / QPB9325', desc:'Routes each frequency band to correct antenna. Internal PIN diodes fail after high-SWR event.'},
+   {name:'TCXO', aka:'19.2 / 38.4 MHz — 4-pad 2.0×1.6 mm', desc:'Temperature-compensated oscillator. Drifts or stops after PCB flex damage. Cannot be tested with DMM — requires scope.'},
+ ],
+ steps:[
+   {k:'check', title:'Check IMEI — hardware vs software split',
+    desc:'Dial *#06# or Settings > About. 10-second test that eliminates 20% of RF cases.',
+    meas:[
+      {l:'IMEI (15 digits)', v:'Present → hardware RF fault', s:'ok'},
+      {l:'IMEI shows zeros / null', v:'EFS/NV data corrupted', s:'bad'},
+    ],
+    pf:{
+      ok:{h:'IMEI present → modem alive, RF hardware fault', b:'Baseband CPU functioning. Fault is in RF hardware path. Continue to step 2.'},
+      bad:{h:'Null IMEI → software NV repair needed', b:'Use QPST EFS Explorer (Qualcomm), Samsung Service Tool, or MTK SP Flash to restore IMEI from QCN backup. Do not replace any ICs before attempting software repair.'},
+    }},
+   {k:'check', title:'Inspect antenna spring contacts and coaxial cables',
+    desc:'Remove back cover and mid-frame. Inspect each pogo pin with 10× loupe. Check all u.FL connectors.',
+    acts:[
+      {t:'Each pogo must protrude, spring under pressure, make solid contact. Corroded = clean with fiberglass brush', w:'ok'},
+      {t:'u.FL inner pin: any kink or crush = open antenna. Replace coaxial cable', w:'warn'},
+      {t:'Antenna ground screws must be torqued — loose = floating ground, RX sensitivity −15 dB', w:'warn'},
+    ],
+    pf:{
+      ok:{h:'All contacts clean and secure → antenna path intact', b:'Proceed to TCXO check.'},
+      bad:{h:'Corroded / bent / missing contact → restore antenna path first', b:'Clean corrosion, replace bent pogo with matching height (0.8–1.5 mm travel). Replace kinked coax. Retest signal before going deeper.'},
+    }},
+   {k:'test', title:'Verify TCXO reference clock',
+    desc:'Scope TCXO output pin (or SoC RFCLK_IN pad) with 500 MHz scope. Without this clock modem refuses to initialize.',
+    meas:[
+      {l:'TCXO output', v:'19.2 or 38.4 MHz sine, 1.6–2.0 Vpp', s:'ok'},
+      {l:'Dead TCXO', v:'DC flat or < 100 mVpp', s:'bad'},
+      {l:'TCXO supply', v:'2.85 V or 1.8 V (check datasheet)', s:'ok'},
+    ],
+    pf:{
+      ok:{h:'TCXO at correct frequency → reference clock fine', b:'Modem has its clock. Proceed to PA supply check.'},
+      bad:{h:'No TCXO → replace oscillator first', b:'4-pad 2.0×1.6 mm: pin 1 = output, pin 2 = GND, pin 3 = VCC, pin 4 = EN (tied high). Verify VCC supply first. If supply OK but no output: replace oscillator. Exact frequency and ppm must match.'},
+    }},
+   {k:'test', title:'Verify VPA and RFFE bus',
+    desc:'VPA must be present at PA module VCC during a call or data session. RFFE clock must toggle during network registration.',
+    meas:[
+      {l:'VPA (PA VCC) during TX', v:'3.4–3.8 V', s:'ok'},
+      {l:'VIO_RFFE', v:'1.8 V (always-on with modem up)', s:'ok'},
+      {l:'RFFE_CLK during registration', v:'26 MHz bursts', s:'ok'},
+      {l:'VPA missing', v:'0 V', s:'bad'},
+    ],
+    pf:{
+      ok:{h:'VPA and RFFE alive → PA powered and configured', b:'RF front-end supply working. Fault may be PA module or transceiver. Proceed to PA test.'},
+      bad:{h:'VPA missing → envelope tracker or PMIC fault', b:'Find envelope-tracking IC (Qorvo ET7300, Nexperia). Check ET_EN pin (must be high during TX). If dead despite enable: ET IC failed. If RFFE_CLK dead: trace from modem SoC — may be PCB fracture.'},
+    }},
+   {k:'fix', title:'Repair actions',
+    acts:[
+      {t:'Clean antenna contacts: IPA + fiberglass pen. No abrasives — pogo coatings scratch', w:'ok'},
+      {t:'Replace coaxial antenna cable: solder new u.FL, route without sharp bends', w:'ok'},
+      {t:'Replace TCXO: hot-air 320 °C, low airflow (60 L/min), tin pads lightly first', w:'ok'},
+      {t:'Replace PA module: 0.3 mm pitch, JBC/Metcal, 235 °C peak on preheated board (150 °C bed)', w:'warn'},
+      {t:'IMEI/NV restore: QPST > EFS Explorer > restore QCN. Must match exact model', w:'ok'},
+    ]},
+   {k:'danger', title:'Critical warnings',
+    acts:[
+      {t:'NEVER transmit RF without antenna connected — reflected power destroys PA output stage instantly', w:'bad'},
+      {t:'NEVER write IMEI from a different device — illegal in most jurisdictions, bricks modem', w:'bad'},
+    ]},
+ ],
+ verify:['IMEI readable via *#06# (15 digits)','Network registration within 30 s of SIM insert','Voice call completes with clear audio both ways','LTE data ≥ 10 Mbps','Signal bars stable — not fluctuating every 5 seconds'],
+ mistakes:[
+   {e:'📡', t:'Replacing PA without checking antenna contacts', d:'Loose spring contacts cause identical "no signal" symptom as dead PA for 0% of the cost.'},
+   {e:'🔢', t:'Replacing ICs when IMEI is null', d:'Null IMEI is software 99% of the time. Modem hardware intact; only NVRAM parameters gone.'},
+   {e:'📻', t:'Skipping TCXO scope test', d:'Dead TCXO has correct DC bias on DMM — looks fine. Only a scope reveals missing oscillation.'},
+ ]},
+
+/* 7 ─── AUDIO ─────────────────────────────────────────────────── */
+{id:'audio', cat:'Audio', icon:'audio',
+ title:'Audio Failure — Speaker / Mic / Earpiece',
+ sub:'No sound from speaker, earpiece silent, mic dead, or distorted audio on any path',
+ summary:'Four independent paths: loudspeaker (smart-amp → driver), earpiece (codec analog out), main mic (MEMS → codec ADC), secondary mic. Identify which path failed first — this eliminates 75% of components immediately. Most common: blown speaker coil (measure DC resistance first), dead MICBIAS (silences all mics), blown amp IC (DC offset on output).',
+ tools:['dmm','scope','micro','station'],
+ lines:[
+   {net:'SPK+ / SPK−', dir:'Drive', nom:'AC 1–4 Vpp differential at normal volume', note:'DC offset > 500 mV = failed output stage. Always check before connecting new speaker.'},
+   {net:'MICBIAS1 / MICBIAS2', dir:'Supply', nom:'1.8–2.7 V (varies by codec)', note:'Bias voltage polarizing MEMS capsule. Without it mic output is 0 V regardless of capsule condition.'},
+   {net:'MIC1+ / MIC1−', dir:'Signal', nom:'AC 10–50 mVpp during speech', note:'Differential signal into codec ADC.'},
+   {net:'I2S_SCK / I2S_WS / I2S_DATA', dir:'Digital audio', nom:'I2S clock 2.048–12.288 MHz', note:'PCM bus from SoC to codec/amp. Flat = SoC audio subsystem not running.'},
+   {net:'I2C_AMP_SDA / SCL', dir:'Control', nom:'400 kHz, ACK every byte', note:'SoC configures smart-amp gain, EQ, impedance protection.'},
+ ],
+ ics:[
+   {name:'Smart-Amp / Speaker Amp', aka:'MAX98937 / MAX98357 / TAS2563 / CS35L45', desc:'Boost-converter + Class-D. Up to 5 W. Failure modes: (1) overdrive input cap short; (2) bridge FET failure → DC on SPK+ destroying voice coil; (3) I2C lockup. DC offset kills new speakers in 30 seconds.'},
+   {name:'Audio Codec', aka:'WCD9385 / WCD938x / Realtek ALC5670 / CS43130', desc:'Converts PCM ↔ analog for ALL paths. Failed codec kills speaker, earpiece, and mic simultaneously. Liquid under BGA is common cause.'},
+   {name:'Speaker Module', aka:'Rectangular LRA or ported speaker', desc:'Voice coil DC resistance 4–8 Ω normal. Open = blown. Short (< 1 Ω) = distorted/weak.'},
+ ],
+ steps:[
+   {k:'check', title:'Identify which audio path is dead',
+    acts:[
+      {t:'Call with earpiece: silent from earpiece only → earpiece path (not speaker amp)', w:'warn'},
+      {t:'Speakerphone: silent → speaker amp or speaker coil', w:'warn'},
+      {t:'Voice memos: nothing recorded → MIC path (MICBIAS or capsule)', w:'warn'},
+      {t:'Music via speaker: distorted/buzzing → coil failing or amp DC fault', w:'warn'},
+      {t:'ALL audio dead simultaneously → codec or I2S bus', w:'bad'},
+    ]},
+   {k:'test', title:'Speaker DC resistance',
+    desc:'Disconnect from charger. Probe directly across speaker terminals on module (not on board pads).',
+    meas:[
+      {l:'Healthy speaker', v:'4–8 Ω DC', s:'ok'},
+      {l:'Blown open coil', v:'> 100 Ω or OL', s:'bad'},
+      {l:'Shorted coil', v:'< 1 Ω', s:'bad'},
+    ],
+    pf:{
+      ok:{h:'4–8 Ω → speaker coil intact', b:'Speaker electrically healthy. Fault is amp IC or signal chain. Proceed to step 3.'},
+      bad:{h:'Open or short → replace speaker', b:'Replace speaker module. After replacement, return to step 1 to confirm other paths work.'},
+    }},
+   {k:'test', title:'Scope SPK± output for DC offset',
+    desc:'Play 1 kHz test tone. Scope AC-coupled on SPK+ and SPK−. MUST do before connecting any new speaker.',
+    meas:[
+      {l:'SPK+ (normal)', v:'AC 1–4 Vpp sine', s:'ok'},
+      {l:'SPK− (complementary)', v:'180° phase to SPK+', s:'ok'},
+      {l:'DC offset on SPK+/−', v:'> 500 mV DC', s:'bad'},
+      {l:'One side flat, one swinging', v:'Half-bridge failure', s:'bad'},
+    ],
+    pf:{
+      ok:{h:'Clean differential AC → amp output healthy', b:'If speaker resistance was also OK: mechanical rub in voice coil (buzzing). Tap gently — if buzz changes, it\'s mechanical. Replace module.'},
+      bad:{h:'DC offset or half-bridge dead → replace amp IC first', b:'DC offset will blow a new speaker coil in 30 seconds. ALWAYS replace amp before connecting new speaker.'},
+    }},
+   {k:'test', title:'Check MICBIAS voltage',
+    desc:'Probe MICBIAS1 at codec or at mic capsule pads. Phone must be in call or recording app.',
+    meas:[
+      {l:'MICBIAS (active)', v:'1.8–2.7 V (varies by codec model)', s:'ok'},
+      {l:'MICBIAS dead', v:'0 V', s:'bad'},
+    ],
+    pf:{
+      ok:{h:'MICBIAS present → scope MIC+ signal during speech', b:'Bias working. Scope MIC+ during speech — should see ~10 mVpp AF. If flat with correct bias: MEMS capsule is dead. Replace mic.'},
+      bad:{h:'MICBIAS missing → codec bias generator fault', b:'Check codec register via ADB (adb shell cat /proc/asound/pcm). If codec is DOWN: check I2S bus and VDD. If codec UP but MICBIAS absent: driver not enabling LDO or codec internal failure.'},
+    }},
+   {k:'fix', title:'Repair actions',
+    acts:[
+      {t:'Blown speaker coil: replace module. Match impedance (4 Ω vs 8 Ω critical)', w:'ok'},
+      {t:'DC offset from amp IC: replace amp BEFORE connecting new speaker', w:'warn'},
+      {t:'Dead MICBIAS: find shorted filter cap on MICBIAS line, remove. Check 0 Ω jumper in MICBIAS path', w:'ok'},
+      {t:'Blown MEMS capsule: remove (3 pads: GND/VDD/OUT), solder replacement at max 280 °C', w:'warn'},
+      {t:'Clogged mic port: thin wooden pick to clear lint. No compressed air — damages MEMS membrane', w:'ok'},
+    ]},
+ ],
+ verify:['Phone call: both earpiece and mic working (call second phone)','Speakerphone: undistorted at 50% and 100% volume','Voice recording 30 s: clear speech on playback','SPK± DC offset < 50 mV before declaring repair done'],
+ mistakes:[
+   {e:'🔊', t:'Replacing speaker before checking DC offset from amp', d:'Failed amp with DC output blows a new speaker coil in 30 seconds. Scope amp output first.'},
+   {e:'🌬️', t:'Blowing compressed air into mic port', d:'MEMS membrane can be perforated by direct air burst. Use a wooden pick for lint removal.'},
+   {e:'🔉', t:'Assuming all-dead-audio = speaker amp', d:'If earpiece, speaker, AND mic all dead simultaneously: the codec is the single point of failure, not the amp.'},
+ ]},
+
+/* 8 ─── BOOT LOOP ─────────────────────────────────────────────── */
+{id:'boot', cat:'Boot', icon:'boot',
+ title:'Boot Loop / Stuck on Logo',
+ sub:'Shows manufacturer logo then reboots, or freezes before OS loads',
+ summary:'Boot loops split 70/30 software vs hardware. ALWAYS flash firmware first — 10 minutes, zero risk. Hardware causes: dying UFS/eMMC storage (bad blocks on system partition), CPU/RAM cold joint after drop, or collapsing VDD_CPU rail under load. Boot crash point reveals which layer failed.',
+ tools:['flash','psu','scope','station','hotair','dmm'],
+ lines:[
+   {net:'VDD_CPU / VDD_SOC', dir:'Core', nom:'0.85–0.95 V, ±3% regulation', note:'Droops during burst decoding at boot. Dip > 5% causes reset. Measure at VDD_CPU cap during heaviest boot activity.'},
+   {net:'UFS_VCC', dir:'Storage', nom:'2.5–2.9 V', note:'UFS NAND supply. Missing = storage offline = bootloader cannot read kernel.'},
+   {net:'UFS_VCCQ / VCCQ2', dir:'Storage', nom:'1.2 V / 1.8 V', note:'UFS IO voltages. All three UFS rails must be present simultaneously.'},
+   {net:'LPDDR_VDD / VDDQ', dir:'RAM', nom:'1.1 V / 0.55 V (LPDDR5)', note:'RAM core and IO. Missing or drooping causes kernel panic at RAM init.'},
+ ],
+ ics:[
+   {name:'UFS / eMMC Storage', aka:'THGJFGT / KLUCG8UHDB / MTFC512GAP', desc:'NAND organized in partitions: bootloader, boot, system, userdata, vendor. Bad blocks on bootloader or system = boot loops. UFS controller wear-leveling fails silently when exhausted.'},
+   {name:'SoC + LPDDR RAM (PoP)', aka:'Snapdragon 8 Gen / Dimensity 9xxx / Exynos 2xxx', desc:'BGA cold joint after drop causes intermittent RAM arbitration errors = random boot loops. Heat-cycling signature: works cold, fails after 10 minutes warm.'},
+ ],
+ steps:[
+   {k:'check', title:'Classify boot loop stage',
+    acts:[
+      {t:'Powers on then off in < 3 seconds: PMIC/rail/power fault → see No Power tree', w:'bad'},
+      {t:'Logo then reboots before animation: bootloader crash → storage or bootloader partition corrupt', w:'warn'},
+      {t:'Logo + animation then reboots: kernel loading → RAM fault or kernel partition bad', w:'warn'},
+      {t:'Gets to lock screen then reboots: system partition or app crash → reflash or factory reset', w:'warn'},
+      {t:'Reboots after 5–10 min warm: thermal or rail droop under sustained load', w:'warn'},
+    ]},
+   {k:'fix', title:'Step 1 — Firmware flash (ALWAYS first)',
+    desc:'Full clean flash with stock firmware. Resolves 70% of boot loops.',
+    acts:[
+      {t:'Qualcomm: QFIL with prog_emmc_firehose or prog_ufs_firehose + ROM package', w:'ok'},
+      {t:'Samsung: Odin with full AP+BL+CP+CSC. Enable Re-partition if needed', w:'ok'},
+      {t:'MTK: SP Flash Tool with scatter file + full image set', w:'ok'},
+      {t:'Apple: iTunes/Finder DFU restore with IPSW', w:'ok'},
+      {t:'Flash fails mid-way with storage error: UFS hardware failing → proceed to hardware steps', w:'bad'},
+    ],
+    pf:{
+      ok:{h:'Flash succeeded and boots → software confirmed', b:'Done. Monitor 24 hours. If boot loop returns: marginal UFS bad blocks survived flash (consider replacing UFS).'},
+      bad:{h:'Flash fails or loop returns → hardware fault', b:'Proceed to hardware checks.'},
+    }},
+   {k:'test', title:'Measure UFS storage supply rails',
+    desc:'All three must be present. Probe nearest decoupling caps to UFS BGA.',
+    meas:[
+      {l:'UFS_VCC', v:'2.5–2.9 V', s:'ok'},
+      {l:'UFS_VCCQ', v:'1.2 V ±5%', s:'ok'},
+      {l:'UFS_VCCQ2', v:'1.8 V ±5%', s:'ok'},
+      {l:'Any UFS rail missing', v:'0 V', s:'bad'},
+    ],
+    pf:{
+      ok:{h:'All UFS rails present → storage has power', b:'Power not the storage issue. UFS chip may have bad NAND blocks. Flash tool error at specific sector = UFS chip needs replacement.'},
+      bad:{h:'Missing UFS rail → find disabled LDO', b:'Locate LDO for missing rail. Check EN pin (must be high at boot). If EN high and output 0 V: LDO or shorted output filter cap.'},
+    }},
+   {k:'test', title:'Monitor VDD_CPU for droop during boot',
+    desc:'Scope probe on VDD_CPU cap during boot. 50 mV/div, 100 ms/div. Watch for dips at crash moment.',
+    meas:[
+      {l:'VDD_CPU during boot', v:'0.85–0.95 V, stable ±3%', s:'ok'},
+      {l:'Dip below 0.80 V', v:'Rail collapsing under burst load', s:'bad'},
+      {l:'Rail missing', v:'0 V', s:'bad'},
+    ],
+    pf:{
+      ok:{h:'VDD_CPU stable → CPU power fine', b:'Fault is storage (bad blocks) or RAM PoP cold joint. Proceed to SoC reball evaluation.'},
+      bad:{h:'VDD_CPU drooping → weak rail', b:'(a) If caps missing from prior repair: add 4.7 µF 0402 X5R in parallel. (b) If caps all present: PMIC VDD_CPU regulator degraded → reflow or replace PMIC.'},
+    }},
+   {k:'check', title:'SoC / RAM BGA cold joint test',
+    desc:'Intermittent boot loop correlating with device temperature = cold BGA joint.',
+    acts:[
+      {t:'Apply gentle pressure to SoC area through back cover during boot — behavior changes = BGA joint', w:'warn'},
+      {t:'Test at 5 °C: boots more reliably cold = thermal expansion fault confirmed', w:'warn'},
+      {t:'X-ray (if available): cracked solder balls at SoC corners or PoP interface', w:'ok'},
+      {t:'Reball SoC: preheat 150 °C / 90 s, peak 218 °C / 30 s. OEM ball spec 0.25 mm Sn63Pb37', w:'warn'},
+    ]},
+   {k:'danger', title:'Critical warnings',
+    acts:[
+      {t:'NEVER reball PoP at > 225 °C peak — PoP interposer delaminates above this temperature', w:'bad'},
+      {t:'NEVER flash unofficial firmware — corrupted firmware destroys bootloader partition permanently', w:'bad'},
+    ]},
+ ],
+ verify:['Completes boot to lock/home screen without restart','Stable 30 minutes with GPS + camera + screen on','ADB uptime shows > 30 min without restart','IMEI, serial number intact in Settings > About','Firmware version matches expected for model'],
+ mistakes:[
+   {e:'🔧', t:'Reballing SoC before firmware flash', d:'70% of boot loops are software. Reball takes 45–90 min, risks pad damage. Flash takes 10 min, zero risk.'},
+   {e:'🌡️', t:'Not doing thermal stress test', d:'Cold-joint SoC passes 5 boots at room temp then fails warm. Run device warm before signing off.'},
+   {e:'📱', t:'Using unofficial firmware', d:'Wrong scatter file maps partitions incorrectly and erases bootloader. Always official firmware matched to exact model + country variant.'},
+ ]},
+
+/* 9 ─── OVERHEATING ───────────────────────────────────────────── */
+{id:'heating', cat:'Power', icon:'charge',
+ title:'Overheating / Thermal Shutdown',
+ sub:'Phone hot while idle, shuts down with heat warning, or throttles to minimum speed',
+ summary:'At idle screen-off: healthy phone draws 10–50 mA at 4 V. Anything making the phone warm at idle is excess power draw. Diagnostic: connect DC PSU and read idle current. Then thermal imaging or IPA mist to find the hot component. Hardware leakage beats thermal paste and software in 60% of idle-heat complaints.',
+ tools:['psu','dmm','micro','freeze','scope'],
+ lines:[
+   {net:'VBAT idle draw', dir:'Current', nom:'10–50 mA @ 4 V, screen off', note:'Baseline. Above 100 mA at idle with airplane mode = hardware leak.'},
+   {net:'OTG_EN / BOOST_EN', dir:'Logic', nom:'0 V at idle', note:'USB OTG or wireless TX boost. Stuck high = charger IC pumps watts continuously.'},
+ ],
+ ics:[
+   {name:'Battery cell', aka:'LiPo > 500 cycles', desc:'Internal resistance rises with age. 200 mΩ IR under 2 A = 800 mW heat inside cell. Measure: 1 A pulse for 2 s, measure OCV drop. > 0.2 V = high IR.'},
+ ],
+ steps:[
+   {k:'check', title:'Distinguish hardware vs software heat',
+    acts:[
+      {t:'Factory reset, test before reinstalling apps — if heat stops: software/app issue', w:'ok'},
+      {t:'Airplane mode + screen off, 10 minutes: still hot = hardware', w:'warn'},
+      {t:'ADB shell "top" — any process > 30% CPU at idle = software cause', w:'ok'},
+    ],
+    pf:{
+      ok:{h:'Hot in airplane mode idle → hardware confirmed', b:'Software eliminated. Proceed to PSU current measurement.'},
+      bad:{h:'Cools in airplane mode → RF signal hunting', b:'Device at edge of coverage. PA at max power constantly. Move to strong signal area. If still hot near tower: baseband firmware issue or reflash.'},
+    }},
+   {k:'test', title:'Measure idle current on DC PSU',
+    desc:'Remove battery, connect PSU 4.0 V / 1 A. Full boot, airplane mode on, screen off. Wait 60 s settled.',
+    meas:[
+      {l:'Healthy idle', v:'10–50 mA', s:'ok'},
+      {l:'Elevated', v:'50–100 mA', s:'warn'},
+      {l:'Hardware leakage', v:'> 120 mA', s:'bad'},
+      {l:'Rail short likely', v:'> 300 mA', s:'bad'},
+    ],
+    pf:{
+      ok:{h:'< 100 mA → no significant hardware leak', b:'No hardware leak. Heat is likely worn battery IR under load. Test battery IR separately.'},
+      bad:{h:'> 120 mA → locate leaking component', b:'Use freeze-spray / thermal camera across PMIC, charger IC, PA, baseband areas to find the hot component.'},
+    }},
+   {k:'check', title:'Check OTG_EN / BOOST line state',
+    desc:'Charger IC stuck in USB-OTG boost mode pumps 5 V from battery continuously, drawing 300–600 mA even with nothing connected.',
+    meas:[
+      {l:'OTG_EN at idle (no USB device)', v:'0 V', s:'ok'},
+      {l:'OTG_EN stuck high', v:'1.8 V', s:'bad'},
+      {l:'Charger IC temp', v:'< 40 °C at idle', s:'ok'},
+    ],
+    pf:{
+      ok:{h:'OTG_EN low → boost not running', b:'Continue thermal scan to PMIC and baseband.'},
+      bad:{h:'OTG_EN stuck high → firmware or GPIO fault', b:'Try software OTG toggle. If doesn\'t reset: firmware reflash usually resolves stuck GPIO. If reflash fails: SoC GPIO driver internally damaged.'},
+    }},
+   {k:'check', title:'Battery internal resistance test',
+    desc:'Reconnect battery. Measure OCV. Apply 1 A load (camera app or test resistor). Measure voltage under load.',
+    meas:[
+      {l:'OCV (no load)', v:'3.90–4.05 V (50–80% charge)', s:'ok'},
+      {l:'IR = (OCV − V_load) / 1 A', v:'< 80 mΩ good', s:'ok'},
+      {l:'Worn cell IR', v:'> 120 mΩ → replace', s:'warn'},
+      {l:'Severe IR', v:'> 200 mΩ', s:'bad'},
+    ],
+    pf:{
+      ok:{h:'IR < 80 mΩ → battery healthy', b:'Battery not generating heat. Source is a board component.'},
+      bad:{h:'IR > 120 mΩ → replace battery', b:'Battery generates heat under load. A 200 mΩ cell under 2 A dissipates 800 mW as internal heat. Also causes thermal throttling without any board fault.'},
+    }},
+   {k:'fix', title:'Repair actions',
+    acts:[
+      {t:'Software heat: factory reset, reinstall apps selectively', w:'ok'},
+      {t:'OTG stuck: firmware flash to reset GPIO states', w:'ok'},
+      {t:'Leaky cap on PMIC output: freeze-spray to find, remove, replace (see Short Circuit tree)', w:'ok'},
+      {t:'High-IR battery (> 120 mΩ): replace cell', w:'ok'},
+      {t:'Ionic corrosion leakage: ultrasonic clean 3 min, IPA rinse, 60 °C oven 30 min', w:'ok'},
+    ]},
+   {k:'danger', title:'Critical warnings',
+    acts:[
+      {t:'NEVER continue operating board > 75 °C on any chip — solder joints crack at sustained 80 °C', w:'bad'},
+      {t:'NEVER use freeze spray to cool a running board long-term — condensation causes additional shorts', w:'warn'},
+    ]},
+ ],
+ verify:['PSU idle current < 60 mA at 4 V, screen off, airplane on','Back of phone < 35 °C after 10 min idle','Battery temp < 40 °C after 30-min charge at 1 A','No thermal throttling warning in 10-min CPU benchmark'],
+ mistakes:[
+   {e:'🔋', t:'Replacing battery without measuring IR', d:'Selling a new battery when the heat source is a leaky cap does nothing. Measure IR and idle current first.'},
+   {e:'📱', t:'Ignoring OTG_EN as heat source', d:'Charger IC in OTG boost at idle draws 300–500 mA and runs at 65 °C continuously. Invisible without probing OTG_EN.'},
+ ]},
+
+/* 10 ─── BATTERY DRAIN ────────────────────────────────────────── */
+{id:'drain', cat:'Power', icon:'drain',
+ title:'Rapid Battery Drain',
+ sub:'Phone loses charge unusually fast — 100% to dead in 4–6 hours with normal use',
+ summary:'Drain is hardware (component drawing too much current, measurable with PSU) or software (wake-lock/runaway process). Distinguish with PSU idle current first. Hardware drain > 100 mA at idle is always measurable. Software drain shows normal hardware idle but excessive CPU wake-lock time in battery stats.',
+ tools:['psu','dmm','micro'],
+ lines:[
+   {net:'VBAT idle (screen off, airplane on)', dir:'Current', nom:'10–30 mA', note:'The only number that matters for hardware vs software split.'},
+   {net:'VBAT idle (cellular on)', dir:'Current', nom:'30–80 mA', note:'Normal with radio scanning. Consistently > 100 mA with signal locked = leakage.'},
+ ],
+ ics:[
+   {name:'PMIC always-on LDOs', aka:'Any always-on regulator', desc:'LDO that stays at full output in idle draws continuous current. Common after liquid damage to PMIC enable logic.'},
+   {name:'Wi-Fi / BT combo IC', aka:'WCN3990 / BCM4389', desc:'Combo chip failing to enter sleep mode draws 80–200 mA continuously vs < 5 mA in sleep.'},
+   {name:'Battery cell', aka:'Aged LiPo > 500 cycles', desc:'Not a leak — actual capacity fade. Cell reporting 4000 mAh may deliver only 2200 mAh effective.'},
+ ],
+ steps:[
+   {k:'check', title:'Establish baseline: hardware or software?',
+    desc:'Remove battery. PSU 4.0 V / 1 A. Boot fully. Airplane mode on. Screen off. Wait 60 s. Read stable current.',
+    meas:[
+      {l:'Screen-off, airplane, settled', v:'10–30 mA → software drain likely', s:'ok'},
+      {l:'Screen-off, airplane, settled', v:'> 80 mA → hardware leak', s:'bad'},
+    ],
+    pf:{
+      ok:{h:'10–30 mA hardware idle → software or battery cause', b:'Hardware not leaking. Proceed to software analysis (step 2) and battery capacity test (step 3).'},
+      bad:{h:'> 80 mA → hardware leak present', b:'Use thermal localization from Overheating tree to find the hot component then repair accordingly.'},
+    }},
+   {k:'check', title:'Software: check wake locks and battery stats',
+    acts:[
+      {t:'ADB: "adb shell dumpsys batterystats | grep wake_lock" — lists all wake locks and durations', w:'ok'},
+      {t:'On-device: Settings > Battery > Usage — any single app > 20% when not actively in use is suspicious', w:'warn'},
+      {t:'Common offenders: cloud sync apps, location polling, push notification services with bad loops', w:'warn'},
+      {t:'Resolution: uninstall suspect apps one at a time, retest drain between each', w:'ok'},
+    ]},
+   {k:'test', title:'Test actual battery capacity',
+    desc:'Controlled discharge test or OS battery health tool.',
+    meas:[
+      {l:'Healthy 4000 mAh cell', v:'> 3600 mAh (90% rated)', s:'ok'},
+      {l:'Worn cell', v:'2000–3200 mAh from 4000 mAh rated', s:'warn'},
+      {l:'Battery health in OS', v:'> 80% = keep, < 80% = replace', s:'info'},
+    ],
+    pf:{
+      ok:{h:'Capacity > 85% → battery not the drain cause', b:'Battery is healthy. Drain must be software. Continue wake-lock analysis.'},
+      bad:{h:'Capacity < 80% → replace battery', b:'Cell cannot store rated charge. Replace with genuine capacity cell. Test capacity after install — cheap replacements often have false labeling.'},
+    }},
+   {k:'check', title:'Wi-Fi sleep mode test',
+    desc:'Airplane off, Wi-Fi only on (cellular off). Connect to known network. Screen off, wait 5 min. Measure current.',
+    meas:[
+      {l:'Wi-Fi associated, screen off', v:'30–80 mA', s:'ok'},
+      {l:'Wi-Fi causing excessive draw', v:'> 150 mA', s:'bad'},
+    ],
+    pf:{
+      ok:{h:'Wi-Fi draw normal → combo chip sleeping correctly', b:'Radio not the drain source. Continue software analysis.'},
+      bad:{h:'Wi-Fi causes > 150 mA → combo chip not sleeping', b:'(a) Firmware update — sleep state regression bugs common. (b) Factory reset to clear driver state. (c) If persists after reflash: combo IC power management damaged. Reflow or replace.'},
+    }},
+   {k:'fix', title:'Repair actions',
+    acts:[
+      {t:'Hardware leak > 80 mA: thermal localize (Overheating tree), replace component', w:'ok'},
+      {t:'Software wake-lock: uninstall offending app, or factory reset + selective restore', w:'ok'},
+      {t:'Worn battery < 80% capacity: replace with genuine cell', w:'ok'},
+      {t:'Combo chip not sleeping: firmware flash first; if persists, reflow IC', w:'warn'},
+      {t:'Ionic leakage from water: ultrasonic clean board, replace corroded bypass caps', w:'ok'},
+    ]},
+ ],
+ verify:['PSU idle < 40 mA, screen off, airplane, fully booted','Battery loses < 1% per 10 min idle (> 16 hours standby)','Capacity test > 85% if battery replaced','No process above 15% CPU in ADB top at idle','8-hour overnight drain < 25% from 100%'],
+ mistakes:[
+   {e:'🔋', t:'Replacing battery without PSU idle current first', d:'If leaky cap draws 200 mA, new battery also drains fast. Fix hardware leak first.'},
+   {e:'📶', t:'Not testing in different signal environments', d:'0–1 bar signal = PA at full power constantly. Not a fault — physics. Test in strong signal before concluding hardware drain.'},
+   {e:'🛜', t:'Not isolating Wi-Fi from cellular', d:'Different hardware paths. Testing both mixed mixes contributions. Isolate each radio.'},
+ ]},
+
+]; /* end DB */
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   TOOLS META
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+const TOOLS = {
+  psu:   {n:'DC Bench PSU',       s:'0–30 V / 0–5 A',           i:'psu'},
+  dmm:   {n:'Digital Multimeter', s:'Fluke 87V / 117',          i:'dmm'},
+  scope: {n:'Oscilloscope',       s:'≥ 200 MHz, 2CH',           i:'scope'},
+  micro: {n:'Stereo Microscope',  s:'7–45×',                    i:'micro'},
+  station:{n:'Solder Station',    s:'JBC / Hakko FX-951',       i:'station'},
+  hotair:{n:'Hot Air Rework',     s:'Quick 861DW / JBC HT-BGA', i:'hotair'},
+  freeze:{n:'Freeze Spray / Thermal', s:'CAIG + InfiRay P2',   i:'freeze'},
+  flash: {n:'Firmware Flasher',   s:'QFIL / Odin / iTunes',     i:'flash'},
+};
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   APP STATE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+const STATE = {
+  cur: null,          // current fault id
+  q: '',              // search query
+  outcomes: {},       // {faultId: {stepIdx: 'pass'|'fail'|'skip'}}
+  openStep: {},       // {faultId: stepIdx} — which step is expanded
+};
+
+function getOutcomes(fid) {
+  if (!STATE.outcomes[fid]) STATE.outcomes[fid] = {};
+  return STATE.outcomes[fid];
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   UTILITIES — DOM builder (no innerHTML injection)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+function el(tag, cls, text) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text !== undefined) e.textContent = text;
+  return e;
+}
+function elH(tag, cls, html) { // safe only for STATIC html strings
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  e.innerHTML = html;
+  return e;
+}
+function app(parent, ...children) {
+  children.forEach(c => c && parent.appendChild(c));
+  return parent;
+}
+function $ (id) { return document.getElementById(id); }
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   SIDEBAR
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+const CAT_ORDER = ['Power','Display','Audio','Boot','Radio'];
+
+function buildSidebar() {
+  const q = STATE.q.toLowerCase();
+  const groups = {};
+  for (const f of DB) {
+    if (q) {
+      const hay = [f.title, f.sub, f.summary,
+        ...(f.lines||[]).map(l => l.net+' '+l.note),
+        ...(f.ics||[]).map(i => i.name+' '+i.aka+' '+i.desc),
+        ...(f.steps||[]).map(s => s.title+' '+(s.desc||'')+' '+
+          (s.acts||[]).map(a=>a.t).join(' ')),
+      ].join(' ').toLowerCase();
+      if (!hay.includes(q)) continue;
+    }
+    (groups[f.cat] = groups[f.cat] || []).push(f);
+  }
+
+  const nav = $('sideNav');
+  nav.innerHTML = '';
+
+  // Home item
+  const homeItem = el('div', 'nav-item' + (STATE.cur === null ? ' on' : ''));
+  const homeIco = elH('span', 'nav-ico', SVG.home);
+  homeIco.querySelector('svg').style.cssText = 'width:12px;height:12px';
+  app(homeItem, homeIco, el('span', 'nav-lbl', 'Overview'));
+  homeItem.addEventListener('click', () => { STATE.cur = null; refresh(); closeSide(); });
+  nav.appendChild(homeItem);
+
+  for (const cat of CAT_ORDER) {
+    if (!groups[cat]) continue;
+    nav.appendChild(el('div', 'nav-head', cat));
+    for (const f of groups[cat]) {
+      const item = el('div', 'nav-item' + (STATE.cur === f.id ? ' on' : ''));
+      const ico = elH('span', 'nav-ico', SVG[f.icon] || SVG.power);
+      ico.querySelector('svg').style.cssText = 'width:12px;height:12px';
+      const outcomes = getOutcomes(f.id);
+      const doneCount = Object.keys(outcomes).length;
+      const lbl = el('span', 'nav-lbl', f.title.split('/')[0].split('—')[0].trim());
+      app(item, ico, lbl);
+      if (doneCount > 0) {
+        const badge = el('span', '', doneCount + '/' + f.steps.length);
+        badge.style.cssText = 'font-size:10px;color:var(--a);font-family:var(--mono)';
+        item.appendChild(badge);
+      }
+      item.addEventListener('click', () => { STATE.cur = f.id; refresh(); closeSide(); });
+      nav.appendChild(item);
+    }
+  }
+  if (q && !Object.keys(groups).length) {
+    const none = el('div', '', 'No results for "' + q + '"');
+    none.style.cssText = 'padding:20px 12px;font-size:12px;color:var(--ink3)';
+    nav.appendChild(none);
+  }
+}
+
+function closeSide() {
+  if (window.innerWidth <= 860) {
+    $('side').classList.remove('open');
+    $('bdrop').classList.remove('on');
+  }
+  $('mainArea').scrollTop = 0;
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   INTERACTIVE REAL-TIME MAP (SVG flowchart)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+const NODE_W = 90, NODE_H = 38, GAP_X = 20, GAP_Y = 14, PAD = 14;
+
+function buildMap(f) {
+  const outcomes = getOutcomes(f.id);
+  const steps = f.steps;
+  const cols = Math.ceil(steps.length / 2);
+  const rows = 2;
+  const svgW = cols * (NODE_W + GAP_X) - GAP_X + PAD * 2;
+  const svgH = rows * (NODE_H + GAP_Y) - GAP_Y + PAD * 2;
+
+  const NS = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(NS, 'svg');
+  svg.setAttribute('width', svgW);
+  svg.setAttribute('height', svgH);
+  svg.setAttribute('class', 'map-svg');
+  svg.setAttribute('viewBox', '0 0 ' + svgW + ' ' + svgH);
+
+  const COLORS = { check:'#5ee8ff', test:'#ffb347', fix:'#b388ff', danger:'#ff5f7e' };
+
+  steps.forEach((s, i) => {
+    const col = i % Math.ceil(steps.length / rows);
+    const row = Math.floor(i / Math.ceil(steps.length / rows));
+    const x = PAD + col * (NODE_W + GAP_X);
+    const y = PAD + row * (NODE_H + GAP_Y);
+    const cx = x + NODE_W / 2;
+    const cy = y + NODE_H / 2;
+
+    // Connector to next step (if same row)
+    if (i + 1 < steps.length && (i + 1) % Math.ceil(steps.length / rows) !== 0) {
+      const nx = x + NODE_W + GAP_X;
+      const path = document.createElementNS(NS, 'path');
+      const outcome = outcomes[i];
+      let strokeCol = '#2a3050';
+      if (outcome === 'pass') strokeCol = 'var(--g, #4ef0a0)';
+      else if (outcome === 'fail') strokeCol = 'var(--r, #ff5f7e)';
+      path.setAttribute('d', 'M' + (x + NODE_W) + ',' + cy + ' L' + nx + ',' + cy);
+      path.setAttribute('stroke', strokeCol);
+      path.setAttribute('stroke-width', outcome ? '2' : '1.2');
+      path.setAttribute('fill', 'none');
+      path.setAttribute('opacity', outcome ? '1' : '0.4');
+      svg.appendChild(path);
+    }
+
+    // Connector from row 0 col last to row 1 col 0 (wrap)
+    const perRow = Math.ceil(steps.length / rows);
+    if (i === perRow - 1 && rows === 2 && steps.length > perRow) {
+      const nx0 = PAD;
+      const ny1 = PAD + NODE_H + GAP_Y + NODE_H / 2;
+      const path = document.createElementNS(NS, 'path');
+      path.setAttribute('d',
+        'M' + cx + ',' + (y + NODE_H) +
+        ' L' + cx + ',' + (y + NODE_H + GAP_Y / 2) +
+        ' L' + nx0 + ',' + (y + NODE_H + GAP_Y / 2) +
+        ' L' + nx0 + ',' + ny1);
+      path.setAttribute('stroke', '#2a3050');
+      path.setAttribute('stroke-width', '1.2');
+      path.setAttribute('fill', 'none');
+      path.setAttribute('stroke-dasharray', '3,2');
+      path.setAttribute('opacity', '0.4');
+      svg.appendChild(path);
+    }
+
+    // Node background
+    const g = document.createElementNS(NS, 'g');
+    g.setAttribute('class', 'mn type-' + (s.k === 'danger' ? 'danger' : s.k));
+    g.style.cursor = 'pointer';
+
+    const outcome = outcomes[i];
+    let fillCol = '#0d1420', strokeCol = '#1c3060';
+    if (s.k === 'test') { fillCol = '#1a1200'; strokeCol = '#3a2800'; }
+    if (s.k === 'fix') { fillCol = '#130e20'; strokeCol = '#2a1e48'; }
+    if (s.k === 'danger') { fillCol = '#1a0606'; strokeCol = '#4a0f0f'; }
+    let textFill = '#8090b0';
+    if (outcome === 'pass') { fillCol = '#0b1e15'; strokeCol = '#4ef0a0'; textFill = '#4ef0a0'; }
+    if (outcome === 'fail') { fillCol = '#1e0b10'; strokeCol = '#ff5f7e'; textFill = '#ff5f7e'; }
+
+    const isActive = !outcome;
+    let allPrevDone = i === 0 || Object.keys(outcomes).includes(String(i - 1));
+
+    // Check if this is the current active step
+    const currentStep = STATE.openStep[f.id] || 0;
+    const isCurrentlyOpen = (currentStep === i);
+
+    if (isCurrentlyOpen && !outcome) {
+      strokeCol = COLORS[s.k] || '#5ee8ff';
+      textFill = '#fff';
+    }
+
+    const rect = document.createElementNS(NS, 'rect');
+    rect.setAttribute('x', x); rect.setAttribute('y', y);
+    rect.setAttribute('width', NODE_W); rect.setAttribute('height', NODE_H);
+    rect.setAttribute('rx', '6'); rect.setAttribute('ry', '6');
+    rect.setAttribute('fill', fillCol);
+    rect.setAttribute('stroke', strokeCol);
+    rect.setAttribute('stroke-width', isCurrentlyOpen && !outcome ? '2' : '1.5');
+
+    // Step number
+    const numText = document.createElementNS(NS, 'text');
+    numText.setAttribute('x', cx);
+    numText.setAttribute('y', cy - 7);
+    numText.setAttribute('fill', outcome ? textFill : '#4a5570');
+    numText.setAttribute('font-size', '8');
+    numText.setAttribute('font-family', 'monospace');
+    numText.setAttribute('text-anchor', 'middle');
+    numText.setAttribute('dominant-baseline', 'middle');
+    numText.textContent = 'STEP ' + String(i + 1).padStart(2, '0');
+
+    // Title (truncated)
+    const title = s.title.length > 14 ? s.title.slice(0, 13) + '…' : s.title;
+    const titleText = document.createElementNS(NS, 'text');
+    titleText.setAttribute('x', cx);
+    titleText.setAttribute('y', cy + 5);
+    titleText.setAttribute('fill', textFill);
+    titleText.setAttribute('font-size', '9');
+    titleText.setAttribute('font-family', 'monospace');
+    titleText.setAttribute('text-anchor', 'middle');
+    titleText.setAttribute('dominant-baseline', 'middle');
+    titleText.setAttribute('font-weight', isCurrentlyOpen ? '700' : '400');
+    titleText.textContent = title;
+
+    // Outcome badge circle
+    if (outcome) {
+      const circle = document.createElementNS(NS, 'circle');
+      circle.setAttribute('cx', x + NODE_W - 6);
+      circle.setAttribute('cy', y + 6);
+      circle.setAttribute('r', '5');
+      circle.setAttribute('fill', outcome === 'pass' ? '#4ef0a0' : '#ff5f7e');
+      const badgeText = document.createElementNS(NS, 'text');
+      badgeText.setAttribute('x', x + NODE_W - 6);
+      badgeText.setAttribute('y', y + 6);
+      badgeText.setAttribute('fill', '#07080d');
+      badgeText.setAttribute('font-size', '6');
+      badgeText.setAttribute('font-family', 'monospace');
+      badgeText.setAttribute('font-weight', '700');
+      badgeText.setAttribute('text-anchor', 'middle');
+      badgeText.setAttribute('dominant-baseline', 'middle');
+      badgeText.textContent = outcome === 'pass' ? '✓' : '✗';
+      app(g, circle, badgeText);
+    }
+
+    app(g, rect, numText, titleText);
+
+    g.addEventListener('click', () => {
+      STATE.openStep[f.id] = i;
+      renderFault(f.id);
+      // Scroll to the step
+      setTimeout(() => {
+        const stepEl = document.getElementById('step-' + f.id + '-' + i);
+        if (stepEl) stepEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }, 100);
+    });
+
+    svg.appendChild(g);
+  });
+
+  return svg;
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   STEP CARD BUILDER (pure DOM, no innerHTML with data)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+const K_LABELS = { check:'CHECK', test:'TEST', pass:'PASS', fail:'FAIL', fix:'ACTION', danger:'CAUTION' };
+const K_CLS = { check:'sb-check', test:'sb-test', fix:'sb-fix', danger:'sb-danger' };
+
+function buildStepCard(f, s, idx) {
+  const outcomes = getOutcomes(f.id);
+  const outcome = outcomes[idx];
+  const isOpen = STATE.openStep[f.id] === idx;
+
+  const card = el('div', 'step' + (isOpen ? ' open' : '') + (outcome ? ' done' : ''));
+  card.id = 'step-' + f.id + '-' + idx;
+
+  // Head
+  const head = el('div', 'step-head');
+  const numEl = el('span', 'step-num', 'STEP ' + String(idx + 1).padStart(2,'0'));
+  const badge = el('span', 'step-badge ' + (K_CLS[s.k] || 'sb-check'), K_LABELS[s.k] || s.k.toUpperCase());
+  const title = el('span', 'step-title', s.title);
+
+  app(head, numEl, badge, title);
+
+  if (outcome) {
+    const oc = el('span', outcome === 'pass' ? 'step-outcome outcome-pass' : 'step-outcome outcome-fail',
+      outcome === 'pass' ? '✓ PASS' : outcome === 'fail' ? '✗ FAIL' : '— SKIP');
+    head.appendChild(oc);
+  }
+
+  const chev = elH('span', 'step-chevron', SVG.chevron);
+  chev.querySelector('svg').style.cssText = 'width:13px;height:13px';
+  head.appendChild(chev);
+
+  head.addEventListener('click', () => {
+    STATE.openStep[f.id] = isOpen ? -1 : idx;
+    renderFault(f.id);
+  });
+  card.appendChild(head);
+
+  if (isOpen) {
+    const body = el('div', 'step-body');
+
+    // Description
+    if (s.desc) {
+      const desc = el('p', 'step-desc', s.desc);
+      body.appendChild(desc);
+    }
+
+    // Measurements
+    if (s.meas && s.meas.length) {
+      const row = el('div', 'meas-row');
+      s.meas.forEach(m => {
+        const mv = el('span', 'mv ' + (m.s || ''));
+        app(mv, el('span', 'mv-label', m.l + ': '), el('span', 'mv-val', m.v));
+        row.appendChild(mv);
+      });
+      body.appendChild(row);
+    }
+
+    // Pass/Fail
+    if (s.pf) {
+      const grid = el('div', 'pf-grid');
+      const okBox = el('div', 'pf-box ok');
+      const okHd = el('div', 'pf-hd');
+      const okIco = elH('span', '', SVG.check);
+      okIco.querySelector('svg').style.cssText = 'width:11px;height:11px;margin-right:4px';
+      app(okHd, okIco, el('span', '', 'PASS — ' + s.pf.ok.h));
+      app(okBox, okHd, el('p', 'pf-txt', s.pf.ok.b));
+
+      const badBox = el('div', 'pf-box bad');
+      const badHd = el('div', 'pf-hd');
+      const badIco = elH('span', '', SVG.x);
+      badIco.querySelector('svg').style.cssText = 'width:11px;height:11px;margin-right:4px';
+      app(badHd, badIco, el('span', '', 'FAIL — ' + s.pf.bad.h));
+      app(badBox, badHd, el('p', 'pf-txt', s.pf.bad.b));
+
+      app(grid, okBox, badBox);
+      body.appendChild(grid);
+    }
+
+    // Action items
+    if (s.acts && s.acts.length) {
+      const actsDiv = el('div', 'acts');
+      s.acts.forEach(a => {
+        const act = el('div', 'act ' + (a.w || ''));
+        const ico = el('span', 'act-ico', a.w === 'bad' ? '!' : a.w === 'warn' ? '▲' : '→');
+        act.appendChild(ico);
+        act.appendChild(el('span', 'act-txt', a.t));
+        actsDiv.appendChild(act);
+      });
+      body.appendChild(actsDiv);
+    }
+
+    // PASS / FAIL buttons (show only if not a fix/danger step)
+    if (s.k !== 'danger') {
+      const btns = el('div', 'pf-btns');
+      if (outcome) {
+        const undo = el('button', 'btn-skip', '↩ Undo');
+        undo.addEventListener('click', (e) => {
+          e.stopPropagation();
+          delete getOutcomes(f.id)[idx];
+          renderFault(f.id);
+        });
+        btns.appendChild(undo);
+      } else {
+        const passBtn = el('button', 'btn-pass', '✓ Mark Pass');
+        const failBtn = el('button', 'btn-fail', '✗ Mark Fail');
+        const skipBtn = el('button', 'btn-skip', 'Skip →');
+        passBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          getOutcomes(f.id)[idx] = 'pass';
+          STATE.openStep[f.id] = idx + 1;
+          renderFault(f.id);
+          setTimeout(() => {
+            const next = document.getElementById('step-' + f.id + '-' + (idx + 1));
+            if (next) next.scrollIntoView({ behavior:'smooth', block:'nearest' });
+          }, 80);
+        });
+        failBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          getOutcomes(f.id)[idx] = 'fail';
+          STATE.openStep[f.id] = idx + 1;
+          renderFault(f.id);
+          setTimeout(() => {
+            const next = document.getElementById('step-' + f.id + '-' + (idx + 1));
+            if (next) next.scrollIntoView({ behavior:'smooth', block:'nearest' });
+          }, 80);
+        });
+        skipBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          getOutcomes(f.id)[idx] = 'skip';
+          STATE.openStep[f.id] = idx + 1;
+          renderFault(f.id);
+        });
+        app(btns, passBtn, failBtn, skipBtn);
+      }
+      body.appendChild(btns);
+    }
+
+    card.appendChild(body);
+  }
+
+  return card;
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   RENDER FAULT PAGE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+function renderFault(fid) {
+  const f = DB.find(x => x.id === fid);
+  if (!f) { renderHome(); return; }
+
+  // Ensure open step is initialized
+  if (STATE.openStep[f.id] === undefined) STATE.openStep[f.id] = 0;
+
+  const outcomes = getOutcomes(f.id);
+  const doneCount = Object.keys(outcomes).length;
+  const pct = Math.round(doneCount / f.steps.length * 100);
+
+  const main = $('mainArea');
+  main.innerHTML = '';
+  main.classList.add('fade');
+  setTimeout(() => main.classList.remove('fade'), 350);
+
+  // ── HERO ──
+  const hero = el('div', 'hero');
+  const heroRow = el('div', 'hero-row');
+  const heroIco = elH('div', 'hero-ico', SVG[f.icon] || SVG.power);
+  heroIco.querySelector('svg').style.cssText = 'width:22px;height:22px;color:#07080d';
+  const heroTxt = el('div', '');
+  app(heroTxt,
+    el('div', 'hero-cat', f.cat + ' · diagnostic fault tree'),
+    el('h1', 'hero-title', f.title),
+    el('p', 'hero-sub', f.sub)
+  );
+  app(heroRow, heroIco, heroTxt);
+
+  const pills = el('div', 'hero-pills');
+  const mkPill = (svg, label, val) => {
+    const p = el('span', 'pill');
+    const ico = elH('span', '', svg);
+    ico.querySelector('svg').style.cssText = 'width:10px;height:10px;color:var(--a)';
+    app(p, ico, el('span', '', label + ' '), el('b', '', String(val)));
+    return p;
+  };
+  app(pills,
+    mkPill(SVG.boot, 'Steps', f.steps.length),
+    mkPill(SVG.dmm, 'Tests', f.steps.filter(s=>s.k==='test').length),
+    mkPill(SVG.scope, 'Lines', (f.lines||[]).length),
+    mkPill(SVG.micro, 'ICs', (f.ics||[]).length),
+    mkPill(SVG.check, 'Completed', doneCount + '/' + f.steps.length)
+  );
+  app(hero, heroRow, pills);
+  main.appendChild(hero);
+
+  // ── CONTENT ──
+  const content = el('div', 'content');
+
+  // Progress bar
+  const pbWrap = el('div', 'progress-bar');
+  const pbFill = el('div', 'progress-fill');
+  pbFill.style.width = pct + '%';
+  pbWrap.appendChild(pbFill);
+  content.appendChild(pbWrap);
+
+  // Summary
+  const sumSec = el('div', 'sec');
+  const sumHead = el('div', 'sec-head');
+  app(sumHead, el('span', 'sec-line'), el('span', 'sec-title', 'Technical Overview'));
+  app(sumSec, sumHead, el('div', 'summary', f.summary));
+  content.appendChild(sumSec);
+
+  // Tools
+  const toolsSec = el('div', 'sec');
+  const toolsHead = el('div', 'sec-head');
+  app(toolsHead, el('span', 'sec-line'), el('span', 'sec-title', 'Required Tools'));
+  const toolsRow = el('div', 'tools-row');
+  (f.tools || []).forEach(tid => {
+    const tm = TOOLS[tid] || {n:tid, s:'', i:'dmm'};
+    const chip = el('div', 'tool');
+    const ico = elH('div', 'tool-ico', SVG[tm.i] || SVG.dmm);
+    ico.querySelector('svg').style.cssText = 'width:12px;height:12px';
+    const txt = el('div', '');
+    app(txt, el('div', 'tool-n', tm.n), el('div', 'tool-s', tm.s));
+    app(chip, ico, txt);
+    toolsRow.appendChild(chip);
+  });
+  app(toolsSec, toolsHead, toolsRow);
+  content.appendChild(toolsSec);
+
+  // ── REAL-TIME DIAGNOSTIC MAP ──
+  const mapSec = el('div', 'sec');
+  const mapHead = el('div', 'sec-head');
+  const mapCt = el('span', 'sec-ct', 'Click node to jump · Mark PASS/FAIL to track progress');
+  app(mapHead, el('span', 'sec-line'), el('span', 'sec-title', 'Real-Time Diagnostic Map'), mapCt);
+
+  const mapWrap = el('div', 'map-wrap');
+  const mapScroll = el('div', 'map-scroll');
+  mapScroll.appendChild(buildMap(f));
+  mapWrap.appendChild(mapScroll);
+  app(mapSec, mapHead, mapWrap);
+  content.appendChild(mapSec);
+
+  // ── STEP CARDS ──
+  const stepsSec = el('div', 'sec');
+  const stepsHead = el('div', 'sec-head');
+  const stepsCt = el('span', 'sec-ct', 'Step in order · ' + f.steps.length + ' steps');
+  app(stepsHead, el('span', 'sec-line'), el('span', 'sec-title', 'Diagnostic Branch Tree'), stepsCt);
+  const stepsDiv = el('div', 'steps');
+
+  f.steps.forEach((s, i) => {
+    stepsDiv.appendChild(buildStepCard(f, s, i));
+  });
+
+  // Reset progress button
+  if (doneCount > 0) {
+    const resetBtn = el('button', 'btn-skip', '↺ Reset progress for this fault');
+    resetBtn.style.cssText = 'margin-top:12px;display:block';
+    resetBtn.addEventListener('click', () => {
+      STATE.outcomes[f.id] = {};
+      STATE.openStep[f.id] = 0;
+      renderFault(f.id);
+    });
+    stepsDiv.appendChild(resetBtn);
+  }
+
+  app(stepsSec, stepsHead, stepsDiv);
+  content.appendChild(stepsSec);
+
+  // ── SIGNAL LINES ──
+  if (f.lines && f.lines.length) {
+    const linesSec = el('div', 'sec');
+    const linesHead = el('div', 'sec-head');
+    const linesCt = el('span', 'sec-ct', f.lines.length + ' nets');
+    app(linesHead, el('span', 'sec-line'), el('span', 'sec-title', 'Signal Lines & Test Points'), linesCt);
+    const linesWrap = el('div', 'lines-wrap');
+    const tbl = el('table', 'lines-tbl');
+    f.lines.forEach(l => {
+      const tr = el('tr', '');
+      const tdNet = el('td', 'td-net', l.net);
+      const tdDir = el('td', 'td-dir', l.dir);
+      const tdNom = el('div', '');
+      tdNom.appendChild(el('div', 'td-nom', l.nom));
+      tdNom.appendChild(el('div', '', l.note));
+      tdNom.lastChild.style.cssText = 'color:var(--ink3);font-size:11px;margin-top:2px';
+      const tdCell = el('td', '');
+      tdCell.appendChild(tdNom);
+      app(tr, tdNet, tdDir, tdCell);
+      tbl.appendChild(tr);
+    });
+    linesWrap.appendChild(tbl);
+    app(linesSec, linesHead, linesWrap);
+    content.appendChild(linesSec);
+  }
+
+  // ── SUSPECT ICs ──
+  if (f.ics && f.ics.length) {
+    const icSec = el('div', 'sec');
+    const icHead = el('div', 'sec-head');
+    const icCt = el('span', 'sec-ct', f.ics.length + ' parts');
+    app(icHead, el('span', 'sec-line'), el('span', 'sec-title', 'Suspect ICs & Components'), icCt);
+    const icGrid = el('div', 'ic-grid');
+    f.ics.forEach(ic => {
+      const card = el('div', 'ic-card');
+      app(card,
+        el('div', 'ic-name', ic.name),
+        el('div', 'ic-aka', ic.aka),
+        el('div', 'ic-desc', ic.desc)
+      );
+      icGrid.appendChild(card);
+    });
+    app(icSec, icHead, icGrid);
+    content.appendChild(icSec);
+  }
+
+  // ── VERIFY ──
+  if (f.verify && f.verify.length) {
+    const vSec = el('div', 'sec');
+    const vHead = el('div', 'sec-head');
+    app(vHead, el('span', 'sec-line'), el('span', 'sec-title', 'Verification Checklist'));
+    const vBlock = el('div', 'verify');
+    vBlock.appendChild(el('div', 'verify-hd', '✓ Before handing back to customer'));
+    const vList = el('ul', 'verify-list');
+    f.verify.forEach(v => { const li = el('li', '', v); vList.appendChild(li); });
+    vBlock.appendChild(vList);
+    app(vSec, vHead, vBlock);
+    content.appendChild(vSec);
+  }
+
+  // ── MISTAKES ──
+  if (f.mistakes && f.mistakes.length) {
+    const mSec = el('div', 'sec');
+    const mHead = el('div', 'sec-head');
+    const mCt = el('span', 'sec-ct', 'Avoid these');
+    app(mHead, el('span', 'sec-line'), el('span', 'sec-title', 'Common Mistakes'), mCt);
+    const mList = el('div', 'mistakes');
+    f.mistakes.forEach(m => {
+      const row = el('div', 'mistake');
+      const emo = el('div', 'mistake-e', m.e);
+      const txt = el('div', '');
+      app(txt, el('div', 'mistake-t', m.t), el('div', 'mistake-d', m.d));
+      app(row, emo, txt);
+      mList.appendChild(row);
+    });
+    app(mSec, mHead, mList);
+    content.appendChild(mSec);
+  }
+
+  main.appendChild(content);
+
+  // Footer
+  const foot = el('div', 'footer');
+  foot.appendChild(el('span', '', 'Fault ID: ' + f.id + ' · ' + f.steps.length + ' steps'));
+  foot.appendChild(el('span', '', 'Verify on known-good board · ESD precautions always'));
+  main.appendChild(foot);
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   HOME PAGE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+function renderHome() {
+  const totalSteps = DB.reduce((a,f) => a + f.steps.length, 0);
+  const totalLines = DB.reduce((a,f) => a + (f.lines||[]).length, 0);
+  const totalICs   = DB.reduce((a,f) => a + (f.ics||[]).length, 0);
+
+  const main = $('mainArea');
+  main.innerHTML = '';
+  main.classList.add('fade');
+  setTimeout(() => main.classList.remove('fade'), 350);
+
+  const home = el('div', 'home');
+
+  app(home,
+    el('div', 'home-hi', 'Technician diagnostic atlas · full branch logic · offline'),
+    el('h1', 'home-h', 'Fix any smartphone,\nstep by step.'),
+    el('p', 'home-lede', 'Real measurement values, PASS/FAIL branch logic, interactive diagnostic map, suspect IC references, signal line specs, and verified repair actions — for every major smartphone failure mode.')
+  );
+
+  const stats = el('div', 'stats-row');
+  const mkStat = (n, l) => {
+    const s = el('div', 'stat');
+    app(s, el('div', 'stat-n', String(n)), el('div', 'stat-l', l));
+    return s;
+  };
+  app(stats,
+    mkStat(DB.length, 'Fault Trees'),
+    mkStat(totalSteps, 'Diagnostic Steps'),
+    mkStat(totalLines, 'Signal Lines'),
+    mkStat(totalICs, 'IC References')
+  );
+  home.appendChild(stats);
+
+  const quick = el('div', 'quick');
+  DB.forEach(f => {
+    const btn = el('button', 'qbtn');
+    const ico = elH('div', 'qbtn-ico', SVG[f.icon] || SVG.power);
+    ico.querySelector('svg').style.cssText = 'width:14px;height:14px';
+    app(btn, ico, el('div', 'qbtn-t', f.title.split('/')[0].split('—')[0].trim()), el('div', 'qbtn-d', f.sub));
+    btn.addEventListener('click', () => { STATE.cur = f.id; refresh(); });
+    quick.appendChild(btn);
+  });
+  home.appendChild(quick);
+  main.appendChild(home);
+
+  const foot = el('div', 'footer');
+  foot.appendChild(el('span', '', 'FaultMap Pro v5.1 · Fully offline · No dependencies'));
+  foot.appendChild(el('span', '', 'Always work anti-static · disconnect battery before BGA rework'));
+  main.appendChild(foot);
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   RENDER CONTROLLER
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+function refresh() {
+  buildSidebar();
+  if (STATE.cur) renderFault(STATE.cur);
+  else renderHome();
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   EVENTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+$('srch').addEventListener('input', e => { STATE.q = e.target.value; buildSidebar(); });
+$('menuBtn').addEventListener('click', () => {
+  $('side').classList.toggle('open');
+  $('bdrop').classList.toggle('on');
+});
+$('bdrop').addEventListener('click', () => {
+  $('side').classList.remove('open');
+  $('bdrop').classList.remove('on');
+});
+
+/* Initial render */
+refresh();
+</script>
+</body>
+</html>
